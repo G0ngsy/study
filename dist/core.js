@@ -1,6 +1,6 @@
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.QuizCore=api;})(typeof globalThis!=='undefined'?globalThis:this,function(){
   'use strict';
-  const SCHEMA='concept-cards/v1', KEY='concept-cards:v1', RATINGS=['correct','partial','wrong'];
+  const SCHEMA='concept-cards/v2', KEY='concept-cards:v1', RATINGS=['correct','partial','wrong'];
   const clone=x=>JSON.parse(JSON.stringify(x));
   function assert(ok,message){if(!ok)throw new Error(message||'기록 형식이 올바르지 않습니다.');}
   function str(v,max=30000){return typeof v==='string'&&v.length<=max;}
@@ -16,15 +16,23 @@
     return q;
   }
   function validateState(value){
-    const v=clone(value);assert(v&&v.schema===SCHEMA,'이 앱에서 내보낸 백업 파일이 아닙니다.');
+    const v=clone(value);assert(v&&[SCHEMA,'concept-cards/v1'].includes(v.schema),'이 앱에서 내보낸 백업 파일이 아닙니다.');
+    const legacy=v.schema==='concept-cards/v1';
     assert(Number.isInteger(v.revision)&&v.revision>=0);
     assert(Array.isArray(v.sessions)&&v.sessions.length<=1000);
     const ids=new Set();
     v.sessions.forEach(s=>{
       assert(s&&str(s.id,100)&&!ids.has(s.id));ids.add(s.id);
       assert(date(s.startedAt)&&date(s.updatedAt)&&['active','completed'].includes(s.status));
-      assert(Number.isInteger(s.index)&&s.index>=0&&s.index<30);
-      assert(Array.isArray(s.items)&&s.items.length===30);
+      if(legacy){s.mode='random';s.bundle=null;}
+      assert(['random','bundle'].includes(s.mode));
+      assert(Array.isArray(s.items)&&(s.mode==='random'?s.items.length===30:s.items.length>=1&&s.items.length<=5));
+      assert(Number.isInteger(s.index)&&s.index>=0&&s.index<s.items.length);
+      if(s.mode==='bundle'){
+        const b=s.bundle;assert(b&&str(b.id,100)&&b.id.length>0&&Number.isInteger(b.version)&&b.version>0&&str(b.category,100)&&str(b.title,200));
+        assert(Array.isArray(b.questionIds)&&b.questionIds.length===s.items.length&&new Set(b.questionIds).size===b.questionIds.length);
+        assert(b.questionIds.every(id=>str(id,100)&&s.items.some(a=>a.question?.id===id)));
+      }else assert(s.bundle===null);
       const qids=new Set();s.items.forEach(a=>{
         assert(a&&a.question);question(a.question);assert(!qids.has(a.question.id));qids.add(a.question.id);
         assert(str(a.draft,20000)&&typeof a.revealed==='boolean'&&(a.rating===null||RATINGS.includes(a.rating)));
@@ -35,16 +43,25 @@
       assert(s.status!=='completed'||date(s.completedAt));
     });
     assert(v.activeSessionId===null||(str(v.activeSessionId,100)&&v.sessions.some(s=>s.id===v.activeSessionId&&s.status==='active')));
-    return v;
+    if(legacy)v.learning={read:[],cursor:null};
+    assert(v.learning&&Array.isArray(v.learning.read)&&v.learning.read.length<=5000);
+    const readIds=new Set();v.learning.read.forEach(r=>{assert(r&&str(r.id,100)&&r.id.length>0&&!readIds.has(r.id)&&date(r.at));readIds.add(r.id);});
+    const p=v.learning.cursor;assert(p===null||(p&&str(p.bundleId,100)&&str(p.questionId,100)&&date(p.at)));
+    v.schema=SCHEMA;return v;
   }
-  function empty(){return {schema:SCHEMA,revision:0,activeSessionId:null,sessions:[]};}
+  function empty(){return {schema:SCHEMA,revision:0,activeSessionId:null,sessions:[],learning:{read:[],cursor:null}};}
   function sample(bank,n=30,rng=Math.random){
-    assert(bank.length>=n,'문제가 30개 이상 필요합니다.');
+    assert(Number.isInteger(n)&&n>0&&bank.length>=n,'출제할 문제가 충분하지 않습니다.');
     assert(new Set(bank.map(q=>q.id)).size===bank.length,'문제 ID가 중복되었습니다.');
     const a=[...bank];for(let i=a.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));assert(j>=0&&j<=i);[a[i],a[j]]=[a[j],a[i]];}return a.slice(0,n);
   }
   function createSession(bank,id,now=new Date().toISOString(),rng=Math.random){
-    return {id,startedAt:now,updatedAt:now,completedAt:null,status:'active',index:0,items:sample(bank,30,rng).map(q=>({question:clone(question(q)),draft:'',revealed:false,rating:null}))};
+    return {id,mode:'random',bundle:null,startedAt:now,updatedAt:now,completedAt:null,status:'active',index:0,items:sample(bank,30,rng).map(q=>({question:clone(question(q)),draft:'',revealed:false,rating:null}))};
+  }
+  function createBundleSession(bank,bundle,id,now=new Date().toISOString(),rng=Math.random){
+    assert(bundle.questionIds.length>=1&&bundle.questionIds.length<=5);
+    const selected=bundle.questionIds.map(id=>bank.find(q=>q.id===id));assert(selected.every(Boolean));
+    return {id,mode:'bundle',bundle:clone(bundle),startedAt:now,updatedAt:now,completedAt:null,status:'active',index:0,items:sample(selected,selected.length,rng).map(q=>({question:clone(question(q)),draft:'',revealed:false,rating:null}))};
   }
   function grade(s,index,rating,now=new Date().toISOString()){
     assert(RATINGS.includes(rating)&&s.items[index]?.revealed,'답을 확인한 뒤 평가해 주세요.');
@@ -59,7 +76,9 @@
     const sessions=[...map.values()].sort((x,y)=>Date.parse(y.startedAt)-Date.parse(x.startedAt));
     let active=a.activeSessionId||b.activeSessionId;
     if(!sessions.some(s=>s.id===active&&s.status==='active'))active=null;
-    return validateState({schema:SCHEMA,revision:a.revision+1,activeSessionId:active,sessions});
+    const read=new Map(a.learning.read.map(r=>[r.id,r]));b.learning.read.forEach(r=>{if(!read.has(r.id)||Date.parse(r.at)>Date.parse(read.get(r.id).at))read.set(r.id,r);});
+    const cursors=[a.learning.cursor,b.learning.cursor].filter(Boolean).sort((x,y)=>Date.parse(y.at)-Date.parse(x.at));
+    return validateState({schema:SCHEMA,revision:a.revision+1,activeSessionId:active,sessions,learning:{read:[...read.values()],cursor:cursors[0]||null}});
   }
-  return {SCHEMA,KEY,RATINGS,clone,question,empty,validateState,sample,createSession,grade,counts,mergeStates};
+  return {SCHEMA,KEY,RATINGS,clone,question,empty,validateState,sample,createSession,createBundleSession,grade,counts,mergeStates};
 });
