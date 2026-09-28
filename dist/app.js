@@ -4,7 +4,7 @@ const C=QuizCore,BANK=window.QUIZ_BANK,app=document.getElementById('app');
 const NOTES=window.LEARNING_NOTES,BUNDLES=window.LEARNING_BUNDLES;
 const labels={correct:'정답',partial:'부분정답',wrong:'오답',ungraded:'미평가'};
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let state=C.empty(),page='home',filter='all',recordId='all',notice='',blocked=false,toastTimer,lessonId=null,conceptIndex=0,returnToQuiz=false;
+let state=C.empty(),page='home',filter='all',recordId='all',notice='',blocked=false,toastTimer,lessonId=null,conceptIndex=0,returnToQuiz=false,installPrompt=null;
 try{const raw=localStorage.getItem(C.KEY);if(raw)state=C.validateState(JSON.parse(raw));}catch{notice='저장된 기록을 읽을 수 없습니다. 원본을 보존하고 있습니다. 백업 · 복원에서 기록을 복구하세요.';blocked=true;}
 function toast(message){const t=document.getElementById('toast');t.textContent=message;t.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.hidden=true,4500);}
 function active(){return state.sessions.find(s=>s.id===state.activeSessionId&&s.status==='active');}
@@ -25,6 +25,10 @@ function sessionLabel(s){return s.mode==='bundle'?s.bundle.category+' · '+s.bun
 function lesson(){return BUNDLES.find(b=>b.id===lessonId);}
 function completed(b){return state.sessions.some(s=>s.mode==='bundle'&&s.bundle.id===b.id&&s.bundle.version===b.version&&s.status==='completed');}
 function isRead(id){return state.learning.read.some(r=>r.id===id);}
+function installPanel(){
+ if(window.matchMedia('(display-mode: standalone)').matches)return '';
+ return `<aside class="install-panel"><div><strong>휴대폰 홈 화면에 설치</strong><p>한 번 설치하면 인터넷이 없어도 학습할 수 있어요. PC 기록은 백업 · 복원으로 옮겨 주세요.</p></div><button class="secondary" data-action="install-app">${installPrompt?'앱 설치':'설치 방법 보기'}</button></aside>`;
+}
 function home(){
  const current=active(),cursor=state.learning.cursor;
  return `<section class="wide-section study-home"><span class="eyebrow">조금씩 읽고, 내 말로 기억하기</span><h1>개념부터, 한 장씩.</h1><p class="lead">원하는 파트를 골라 개념 5개를 읽고 바로 퀴즈로 확인해요.<br>읽음 표시는 학습 흔적이에요. 이해했는지는 퀴즈로 확인해 보세요.</p>
@@ -32,7 +36,7 @@ function home(){
  <div class="part-grid">${[...new Set(BUNDLES.map(b=>b.category))].map((category,i)=>{
  const bundles=BUNDLES.filter(b=>b.category===category),ids=bundles.flatMap(b=>b.questionIds),read=ids.filter(isRead).length,done=bundles.filter(completed).length;
  return `<article class="part-card"><span class="eyebrow">PART ${String(i+1).padStart(2,'0')}</span><h2>${esc(category)}</h2><p>읽은 개념 ${read} / ${ids.length}<br>퀴즈 완료 ${done} / ${bundles.length}묶음</p><progress value="${read}" max="${ids.length}" aria-label="${esc(category)} 읽은 개념"></progress><button class="secondary" data-part="${esc(category)}">파트 공부하기 →</button></article>`;
- }).join('')}</div><p class="local-note">학습 진도와 풀이 기록은 이 기기의 같은 브라우저에만 저장돼요. <button class="inline-button" data-nav="backup">백업 · 복원</button></p></section>`;
+ }).join('')}</div>${installPanel()}<p class="local-note">학습 진도와 풀이 기록은 이 기기의 같은 브라우저에만 저장돼요. <button class="inline-button" data-nav="backup">백업 · 복원</button></p></section>`;
 }
 let selectedPart=BUNDLES[0].category;
 function part(){
@@ -111,6 +115,12 @@ document.addEventListener('click',e=>{
     case 'back-quiz':returnToQuiz=false;go('quiz');break;
     case 'quiz-concept':if(s?.mode==='bundle'){const b=BUNDLES.find(b=>b.id===s.bundle.id);if(b)openLesson(b.id,b.questionIds.indexOf(s.items[s.index].question.id),true);}break;
     case 'start':start();break;case 'resume':go('quiz');break;case 'export':exportData();break;
+    case 'install-app':{
+      if(installPrompt){const prompt=installPrompt;installPrompt=null;prompt.prompt();Promise.resolve(prompt.userChoice).then(choice=>{if(choice?.outcome==='dismissed')toast('Chrome 메뉴에서도 앱을 설치할 수 있어요.');}).catch(()=>{});}
+      else if(/iPhone|iPad|iPod/.test(navigator.userAgent))toast('Safari 공유 버튼에서 홈 화면에 추가를 선택하세요.');
+      else toast('Chrome 메뉴(⋮)에서 앱 설치 또는 홈 화면에 추가를 선택하세요.');
+      break;
+    }
     case 'export-raw':try{download(localStorage.getItem(C.KEY)||'{}','개념한장_복구용원본.json');}catch{toast('원본을 읽지 못했습니다.');}break;
     case 'reload':location.reload();break;
     case 'reveal':if(s&&!blocked){s.items[s.index].revealed=true;stamp(s);persist();render();document.querySelector('.answer-panel')?.scrollIntoView({block:'nearest',behavior:'smooth'});}break;
@@ -134,6 +144,13 @@ app.addEventListener('change',async e=>{
   }
 });
 window.addEventListener('storage',e=>{if(e.key===C.KEY){blocked=true;notice='다른 탭에서 기록이 변경되었습니다. 새로고침해 최신 기록을 불러오세요.';render();}});
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;if(page==='home')render();});
+window.addEventListener('appinstalled',()=>{installPrompt=null;if(page==='home')render();});
+if('serviceWorker' in navigator){window.addEventListener('load',()=>{
+  let hadController=Boolean(navigator.serviceWorker.controller);
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{if(hadController)toast('새 버전이 준비됐어요. 앱을 다시 열어 적용하세요.');hadController=true;});
+  navigator.serviceWorker.register('./sw.js').catch(()=>{});
+});}
 const context=document.modelContext;
 if(context?.registerTool){const life=new AbortController();try{Promise.resolve(context.registerTool({name:'get_quiz_progress',title:'학습 진행 상황 확인',description:'현재 회차의 평가 개수와 누적 회차 수를 확인합니다. 답안을 노출하거나 기록을 변경하지 않습니다.',inputSchema:{type:'object',properties:{},additionalProperties:false},annotations:{readOnlyHint:true,untrustedContentHint:false},execute(input){if(!input||typeof input!=='object'||Object.keys(input).length)throw new Error('빈 객체를 입력하세요.');const s=active();return {questionCount:BANK.length,sessionCount:state.sessions.length,current:s?{position:s.index+1,total:s.items.length,...C.counts(s)}:null};}},{signal:life.signal})).catch(()=>{});window.addEventListener('pagehide',()=>life.abort(),{once:true});}catch{}}
 render();

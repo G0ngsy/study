@@ -1,0 +1,32 @@
+{
+  "name": "개념 한 장 · 정보처리기사 실기",
+  "short_name": "개념 한 장",
+  "description": "정보처리기사 실기 개념 학습 카드",
+  "lang": "ko",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f5f4ed",
+  "theme_color": "#32634d",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
