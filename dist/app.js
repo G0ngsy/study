@@ -3,10 +3,20 @@
 const C=QuizCore,BANK=window.QUIZ_BANK,app=document.getElementById('app');
 const NOTES=window.LEARNING_NOTES,BUNDLES=window.LEARNING_BUNDLES;
 const TERM_IDS=["sw-waterfall","sw-prototype","sw-spiral","sw-agile","sw-scrum-master","sw-uml","sw-usecase","sw-sequence","sw-deployment","sw-encapsulation","sw-inheritance","sw-polymorphism","sw-srp","sw-ocp","sw-lsp","sw-isp","sw-dip","sw-mvc","sw-scm","test-case","test-equivalence","test-boundary","test-pesticide","test-absence","test-regression","test-oracle","db-domain","db-candidate","db-normalization","db-denormalization","db-index","db-partition","db-independence","db-distributed","db-bcnf","os-pcb","os-context","os-rr","os-deadlock","os-working-set","os-thrashing","os-ipc","os-opt","net-osi","net-arp","net-dns","net-dhcp","net-icmp","net-nat","net-bgp","net-vlan","sec-hash","sec-salt","sec-rsa","sec-dh","sec-syn","sec-smurf","sec-land","sec-teardrop","sec-waf","sec-vpn","sec-ransomware","sec-apt","sec-watering","sec-credential","sec-backdoor","sec-aslr","sec-canary","it-eai","it-ajax","it-json","it-drm","it-sso","it-mqtt","it-digital-twin","pattern-abstract-factory","pattern-builder","pattern-factory-method","pattern-prototype","pattern-singleton","pattern-adapter","pattern-decorator","pattern-facade","pattern-flyweight","pattern-proxy","pattern-chain","pattern-observer","pattern-strategy","pattern-template-method","pattern-visitor"];
+function termPrompt(note,original){
+ const prompt=original.prompt.trim();
+ if(prompt.endsWith('무엇인가?')&&!prompt.includes(note.title))return prompt;
+ const pattern=prompt.match(/^다음 설명에 해당하는 디자인 패턴의 이름과 분류를 쓰시오\.\s+([\s\S]+)$/);
+ if(pattern)return pattern[1].trim()+' 이 설명에 해당하는 디자인 패턴은 무엇인가?';
+ const nameOnly=prompt.match(/^(.+?)(?:의 이름과.*|의 이름을 쓰시오\.)$/);
+ if(nameOnly&&!nameOnly[1].includes(note.title))return nameOnly[1]+'은 무엇인가?';
+ const first=note.easy.match(/^[^.]+\.?/)?.[0]||note.easy;
+ return first+' 이를 가리키는 명칭은 무엇인가?';
+}
 const SIMPLE_TERM_BANK=TERM_IDS.map(id=>{
  const n=NOTES[id],original=BANK.find(q=>q.id===id);
  return {id:'term-'+id,version:1,category:original.category,
-   prompt:'다음 설명에 해당하는 용어를 쓰시오. '+n.easy,
+   prompt:termPrompt(n,original),
    answer:n.title,keywords:[n.title],explanation:original.answer,
    sources:original.sources,badges:[]};
 });
@@ -82,6 +92,16 @@ let state=C.empty(),page='home',filter='all',recordId='all',notice='',blocked=fa
 try{const raw=localStorage.getItem(C.KEY);if(raw)state=C.validateState(JSON.parse(raw));}catch{notice='저장된 기록을 읽을 수 없습니다. 원본을 보존하고 있습니다. 백업 · 복원에서 기록을 복구하세요.';blocked=true;}
 function toast(message){const t=document.getElementById('toast');t.textContent=message;t.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.hidden=true,4500);}
 function active(){return state.sessions.find(s=>s.id===state.activeSessionId&&s.status==='active');}
+function hasWork(s){return s.items.some(a=>a.rating||a.revealed||a.draft?.trim());}
+function resumable(bundleId=null){
+ const matches=state.sessions.filter(s=>s.status==='active'&&
+   (bundleId?s.mode==='bundle'&&s.bundle?.id===bundleId:s.mode==='random'));
+ return matches.sort((a,b)=>{
+   const progress=x=>x.items.reduce((n,item)=>n+(item.rating?3:item.revealed?2:item.draft?.trim()?1:0),0);
+   return progress(b)-progress(a)||Date.parse(b.updatedAt)-Date.parse(a.updatedAt);
+ })[0]||null;
+}
+
 function stamp(s){s.updatedAt=new Date().toISOString();}
 function persist(next=state,{restore=false}={}){
   if(blocked&&!restore){toast('기록을 먼저 복구해 주세요.');return false;}
@@ -106,7 +126,7 @@ function installPanel(){
 function home(){
  const current=active(),cursor=state.learning.cursor;
  return `<section class="wide-section study-home"><span class="eyebrow">조금씩 읽고, 내 말로 기억하기</span><h1>개념부터, 한 장씩.</h1><p class="lead">원하는 파트를 골라 개념 5개를 읽고 바로 퀴즈로 확인해요.<br>읽음 표시는 학습 흔적이에요. 이해했는지는 퀴즈로 확인해 보세요.</p>
- <div class="study-actions">${cursor&&BUNDLES.some(b=>b.id===cursor.bundleId)?'<button class="primary" data-action="continue-study">읽던 개념 이어 보기</button>':''}${current?`<button class="secondary" data-action="resume">퀴즈 이어 풀기 · ${current.items.length-C.counts(current).ungraded}/${current.items.length}</button>`:''}<button class="secondary" data-action="start">전체 랜덤 30문제</button></div>
+ <div class="study-actions">${cursor&&BUNDLES.some(b=>b.id===cursor.bundleId)?'<button class="primary" data-action="continue-study">읽던 개념 이어 보기</button>':''}${current?`<button class="secondary" data-action="resume">${esc(sessionLabel(current))} 이어 풀기 · ${current.items.length-C.counts(current).ungraded}/${current.items.length}</button>`:''}<button class="secondary" data-action="start">전체 랜덤 30문제</button></div>
  <div class="part-grid">${[...new Set(BUNDLES.map(b=>b.category))].map((category,i)=>{
  const bundles=BUNDLES.filter(b=>b.category===category),ids=bundles.flatMap(b=>b.questionIds),read=ids.filter(isRead).length,done=bundles.filter(completed).length;
  return `<article class="part-card"><span class="eyebrow">PART ${String(i+1).padStart(2,'0')}</span><h2>${esc(category)}</h2><p>읽은 개념 ${read} / ${ids.length}<br>퀴즈 완료 ${done} / ${bundles.length}묶음</p><progress value="${read}" max="${ids.length}" aria-label="${esc(category)} 읽은 개념"></progress><button class="secondary" data-part="${esc(category)}">파트 공부하기 →</button></article>`;
@@ -115,7 +135,7 @@ function home(){
 let selectedPart=BUNDLES[0].category;
 function part(){
  const bundles=BUNDLES.filter(b=>b.category===selectedPart);
- return `<section class="wide-section"><button class="text-button" data-nav="home">← 전체 파트</button><span class="eyebrow">개념 읽기 → 묶음 퀴즈</span><h1>${esc(selectedPart)}</h1><p class="lead">순서대로 시작해도, 필요한 묶음부터 골라도 좋아요.</p><div class="lesson-list">${bundles.map((b,i)=>`<article class="panel"><span class="eyebrow">묶음 ${i+1} · ${b.questionIds.length}개 개념</span><h2>${esc(b.title)}</h2><p>${b.questionIds.map(id=>esc(NOTES[id].title)).join(' · ')}</p><p class="lesson-status">읽음 ${b.questionIds.filter(isRead).length}/${b.questionIds.length} · ${completed(b)?'퀴즈 완료':'퀴즈 미완료'}</p><div class="study-actions"><button class="primary" data-lesson="${b.id}">개념 보기</button><button class="secondary" data-bundle-quiz="${b.id}">묶음 퀴즈</button></div></article>`).join('')}</div></section>`;
+ return `<section class="wide-section"><button class="text-button" data-nav="home">← 전체 파트</button><span class="eyebrow">개념 읽기 → 묶음 퀴즈</span><h1>${esc(selectedPart)}</h1><p class="lead">순서대로 시작해도, 필요한 묶음부터 골라도 좋아요.</p><div class="lesson-list">${bundles.map((b,i)=>`<article class="panel"><span class="eyebrow">묶음 ${i+1} · ${b.questionIds.length}개 개념</span><h2>${esc(b.title)}</h2><p>${b.questionIds.map(id=>esc(NOTES[id].title)).join(' · ')}</p><p class="lesson-status">읽음 ${b.questionIds.filter(isRead).length}/${b.questionIds.length} · ${resumable(b.id)?`퀴즈 ${resumable(b.id).items.length-C.counts(resumable(b.id)).ungraded}/${resumable(b.id).items.length} 진행 중`:completed(b)?'퀴즈 완료':'퀴즈 미완료'}</p><div class="study-actions"><button class="primary" data-lesson="${b.id}">개념 보기</button><button class="secondary" data-bundle-quiz="${b.id}">${resumable(b.id)?'퀴즈 이어 풀기':'묶음 퀴즈'}</button></div></article>`).join('')}</div></section>`;
 }
 function saveCursor(){
  const b=lesson();if(!b||blocked)return;
@@ -132,7 +152,7 @@ function concept(){
  <div class="progress-meta"><strong>${esc(b.title)}</strong><span>${conceptIndex+1} / ${b.questionIds.length}</span></div>
  <article class="question-card concept-card"><div class="card-top"><span class="category-label">개념 읽기</span><div>${badges(q)}</div></div><h1>${esc(n.title)}</h1><h2>쉽게 이해하기</h2><p>${esc(n.easy)}</p><h2>기억할 키워드</h2><div class="keywords">${q.keywords.map(k=>`<span>${esc(k)}</span>`).join('')}</div><h2>시험에서는 이렇게 써요</h2><p class="exam-answer">${esc(q.answer)}</p><details class="concept-more"><summary>예시와 추가 설명 보기</summary><section class="example-box"><h2>이해용 예시 <small>실제 기출 아님</small></h2><p>${esc(n.example)}</p></section><h2>추가 설명</h2><p class="explanation">${esc(q.explanation)}</p></details>
  <button class="secondary read-toggle" data-action="mark-read" ${isRead(id)||blocked?'disabled':''}>${isRead(id)?'✓ 읽음 표시됨':'읽음 표시하기'}</button><p class="local-note">읽음은 이해 완료나 정답을 의미하지 않아요.</p>${sources(q)}</article>
- <div class="quiz-controls"><button class="secondary" data-action="concept-prev" ${conceptIndex===0?'disabled':''}>이전 개념</button>${conceptIndex<b.questionIds.length-1?'<button class="primary" data-action="concept-next">다음 개념 →</button>':`<button class="primary" data-bundle-quiz="${b.id}">이 묶음 ${b.questionIds.length}문제 풀기 →</button>`}</div>
+ <div class="quiz-controls"><button class="secondary" data-action="concept-prev" ${conceptIndex===0?'disabled':''}>이전 개념</button>${conceptIndex<b.questionIds.length-1?'<button class="primary" data-action="concept-next">다음 개념 →</button>':`<button class="primary" data-bundle-quiz="${b.id}">${resumable(b.id)?'진행 중인 퀴즈 이어 풀기 →':`이 묶음 ${b.questionIds.length}문제 풀기 →`}</button>`}</div>
  <div class="concept-links" aria-label="묶음의 개념">${b.questionIds.map((id,i)=>`<button class="text-button" data-concept-index="${i}" ${i===conceptIndex?'aria-current="step"':''}>${isRead(id)?'✓ ':''}${esc(NOTES[id].title)}</button>`).join('')}</div></section>`;
 }
 function bundleResultActions(s){
@@ -167,7 +187,8 @@ function quiz(){
 }
 function result(){const s=state.sessions.find(s=>s.id===recordId);if(!s){page='history';return history();}return `<section class="wide-section"><div class="result-heading"><span class="eyebrow">${s.items.length}장의 기록이 쌓였어요</span><h1>${s.bundle?.id===SQL_BUNDLE_ID?'SQL 영문 쓰기 완료.':s.bundle?.id===SQL_CODE_BUNDLE_ID?'SQL 구문 빈칸 완료.':s.bundle?.id?.startsWith('term-recall:')?'용어 맞히기 완료.':'오늘의 개념 학습 완료.'}</h1><p>${fmt(s.startedAt)} · ${s.bundle?.id===SQL_BUNDLE_ID?'철자와 띄어쓰기를 확인한 연습 결과입니다. 틀리거나 두 번째에 맞힌 명령어는 다음 연습에서 우선 나와요.':s.bundle?.id===SQL_CODE_BUNDLE_ID?'영어 SQL 키워드와 구문을 직접 써 보고 자기평가한 기록입니다.':s.bundle?.id?.startsWith('term-recall:')?'명칭을 직접 적고 자기평가한 기록입니다. 헷갈린 용어는 다음 연습에서 우선 나와요.':'실제 시험 점수가 아닌 자기평가 결과입니다.'}</p></div>${stats(s)}<div class="result-actions"><button class="primary" data-action="review-result">이번 회차 복습</button>${bundleResultActions(s)}</div><div class="result-preview">${s.items.filter(a=>a.rating!=='correct').slice(0,5).map(a=>`<p><span class="result-label ${a.rating}">${labels[a.rating]}</span>${esc(a.question.prompt)}</p>`).join('')||'<p>모든 문제를 정답으로 평가했어요. 시간이 지난 뒤 다시 떠올려 보세요.</p>'}</div></section>`;}
 function history(){
-  const sorted=[...state.sessions].sort((a,b)=>Date.parse(b.startedAt)-Date.parse(a.startedAt));
+  const sorted=state.sessions.filter(s=>s.status==='completed'||hasWork(s)||s.id===state.activeSessionId).sort((a,b)=>Date.parse(b.startedAt)-Date.parse(a.startedAt));
+  if(recordId!=='all'&&!sorted.some(s=>s.id===recordId))recordId='all';
   const selected=recordId==='all'?sorted:sorted.filter(s=>s.id===recordId);
   const records=selected.flatMap(s=>s.items.map((a,i)=>({s,a,i}))).filter(({a})=>a.revealed||a.rating||a.draft).filter(({a})=>filter==='all'||(filter==='star'?a.question.badges.length>0:a.rating===filter));
   return `<section class="wide-section"><div class="section-heading"><div><span class="eyebrow">차곡차곡 쌓인 나의 답</span><h1>풀이 기록</h1></div><button class="secondary" data-action="export">기록 백업</button></div>${!sorted.length?`<div class="empty-state"><span class="empty-icon">▤</span><h2>아직 풀어본 문제가 없어요.</h2><p>퀴즈를 풀면 내 답과 모범답안이 이곳에 모입니다.</p><button class="primary" data-action="start">첫 학습 시작</button></div>`:`<div class="history-toolbar"><label for="session-filter">회차</label><select id="session-filter"><option value="all">모든 회차 (${sorted.length})</option>${sorted.map((s,i)=>`<option value="${esc(s.id)}" ${recordId===s.id?'selected':''}>${fmt(s.startedAt)} · ${esc(sessionLabel(s))} · ${s.status==='completed'?'완료':`${s.items.length-C.counts(s).ungraded}/${s.items.length} 진행 중`}</option>`).join('')}</select></div><div class="filter-tabs" role="group" aria-label="복습 필터">${[['all','전체'],['wrong','오답'],['partial','부분정답'],['star','★ 별표']].map(([v,t])=>`<button data-filter="${v}" class="${v===filter?'active':''}" aria-pressed="${v===filter}">${t}</button>`).join('')}</div>${selected.length===1?`<div class="session-overview">${stats(selected[0])}${selected[0].status==='active'?`<button class="secondary" data-resume="${esc(selected[0].id)}">이 회차 이어 풀기</button>`:''}</div>`:''}<p class="record-count">${records.length}개의 풀이 기록 · 문제를 펼치면 내 답과 해설을 볼 수 있어요.</p><div class="record-list">${records.length?records.map(({s,a,i})=>`<details class="record"><summary><div class="record-title"><span class="record-meta">${esc(sessionLabel(s))} · ${esc(a.question.category)} · ${fmt(s.startedAt)} · ${i+1}번</span><strong>${esc(a.question.prompt)}</strong><div>${badges(a.question)}</div></div><span class="result-label ${a.rating||'ungraded'}">${labels[a.rating||'ungraded']}</span></summary><div class="record-body">${isSqlCode(a.question)?`<h3>문제 SQL</h3><pre class="sql-code">${esc(a.question.code)}</pre>`:''}<h3>내 답안</h3><p class="my-answer">${esc(a.draft)||'작성한 답안이 없습니다.'}</p>${a.revealed?`<h3>모범답안</h3><p>${esc(a.question.answer)}</p><div class="keywords">${a.question.keywords.map(k=>`<span>${esc(k)}</span>`).join('')}</div><p class="explanation">${esc(a.question.explanation)}</p>${sources(a.question)}`:`<p>아직 정답을 확인하지 않은 문제입니다.</p><button class="secondary" data-resume="${esc(s.id)}" data-position="${i}">이 문제 이어 풀기</button>`}</div></details>`).join(''):'<div class="empty-state compact"><h2>해당하는 풀이 기록이 없어요.</h2><p>다른 필터를 선택하거나 학습을 이어가세요.</p></div>'}</div>`}</section>`;
@@ -180,9 +201,11 @@ function render(){
 function go(view){page=view;render();window.scrollTo({top:0,behavior:'instant'});}
 function start(bundleId=null){
   if(blocked){toast('백업 · 복원에서 기록을 복구해 주세요.');return;}
-  if(active()&&!confirm('진행 중인 회차는 풀이 기록에 남겨두고 새 퀴즈를 시작할까요?'))return;
-  const id=crypto.randomUUID?crypto.randomUUID():`s-${Date.now()}-${Math.random().toString(16).slice(2)}`;
   const bundle=bundleId?BUNDLES.find(b=>b.id===bundleId):null;if(bundleId&&!bundle)return;
+  const existing=resumable(bundleId);
+  if(existing){state.activeSessionId=existing.id;persist();go('quiz');return;}
+  if(active()&&hasWork(active())&&!confirm('다른 퀴즈의 풀이가 저장되어 있어요. 새 퀴즈를 시작할까요?'))return;
+  const id=crypto.randomUUID?crypto.randomUUID():`s-${Date.now()}-${Math.random().toString(16).slice(2)}`;
   const bank=BANK.map(q=>questionForConcept(q,bundle?.questionIds||[q.id]));
   const s=bundle?C.createBundleSession(bank,bundle,id):C.createSession(bank,id);state.sessions.unshift(s);state.activeSessionId=s.id;persist();go('quiz');
 }
