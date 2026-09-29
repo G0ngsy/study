@@ -144,7 +144,8 @@ const EXAM_VARIANTS=[
     "keywords": [
       "애자일"
     ],
-    "version": 1
+    "version": 1,
+    "responseFormat": "term"
   },
   {
     "id": "exam-sw-requirement",
@@ -156,7 +157,8 @@ const EXAM_VARIANTS=[
       "기능",
       "비기능"
     ],
-    "version": 1
+    "version": 1,
+    "responseFormat": "term"
   },
   {
     "id": "exam-sw-class",
@@ -167,7 +169,8 @@ const EXAM_VARIANTS=[
     "keywords": [
       "클래스"
     ],
-    "version": 1
+    "version": 1,
+    "responseFormat": "term"
   },
   {
     "id": "exam-test-alpha-beta",
@@ -179,7 +182,8 @@ const EXAM_VARIANTS=[
       "알파 테스트",
       "베타 테스트"
     ],
-    "version": 1
+    "version": 1,
+    "responseFormat": "term"
   },
   {
     "id": "exam-test-stub-driver",
@@ -191,7 +195,8 @@ const EXAM_VARIANTS=[
       "스텁",
       "드라이버"
     ],
-    "version": 1
+    "version": 1,
+    "responseFormat": "term"
   },
   {
     "id": "exam-test-regression",
@@ -209,7 +214,8 @@ const EXAM_VARIANTS=[
       "Integration",
       "System"
     ],
-    "version": 1
+    "version": 1,
+    "responseFormat": "word-bank"
   },
   {
     "id": "exam-test-oracle",
@@ -220,7 +226,8 @@ const EXAM_VARIANTS=[
     "keywords": [
       "샘플링 오라클"
     ],
-    "version": 1
+    "version": 1,
+    "responseFormat": "term"
   },
   {
     "id": "exam-test-static",
@@ -232,7 +239,8 @@ const EXAM_VARIANTS=[
       "정적 테스트",
       "동적 테스트"
     ],
-    "version": 1
+    "version": 1,
+    "responseFormat": "term"
   },
   {
     "id": "exam-test-white-black",
@@ -244,7 +252,8 @@ const EXAM_VARIANTS=[
       "화이트박스",
       "블랙박스"
     ],
-    "version": 1
+    "version": 1,
+    "responseFormat": "term"
   },
   {
     "id": "exam-test-levels",
@@ -264,7 +273,8 @@ const EXAM_VARIANTS=[
       "Integration",
       "Unit"
     ],
-    "version": 1
+    "version": 1,
+    "responseFormat": "word-bank"
   },
   {
     "id": "exam-test-coverage",
@@ -276,7 +286,8 @@ const EXAM_VARIANTS=[
       "구문 커버리지",
       "결정 커버리지"
     ],
-    "version": 1
+    "version": 1,
+    "responseFormat": "term"
   },
   {
     "id": "exam-sec-watering",
@@ -294,7 +305,8 @@ const EXAM_VARIANTS=[
       "Sniffing",
       "Pharming"
     ],
-    "version": 1
+    "version": 1,
+    "responseFormat": "word-bank"
   },
   {
     "id": "exam-sec-ids-ips",
@@ -306,7 +318,8 @@ const EXAM_VARIANTS=[
       "IDS",
       "IPS"
     ],
-    "version": 1
+    "version": 1,
+    "responseFormat": "english-abbreviation"
   },
   {
     "id": "exam-sec-cia",
@@ -319,7 +332,8 @@ const EXAM_VARIANTS=[
       "무결성",
       "가용성"
     ],
-    "version": 1
+    "version": 1,
+    "responseFormat": "term"
   },
   {
     "id": "exam-sec-symmetric",
@@ -331,7 +345,8 @@ const EXAM_VARIANTS=[
       "대칭키",
       "비대칭키"
     ],
-    "version": 1
+    "version": 1,
+    "responseFormat": "term"
   },
   {
     "id": "exam-sec-xss-csrf",
@@ -343,7 +358,8 @@ const EXAM_VARIANTS=[
       "XSS",
       "CSRF"
     ],
-    "version": 1
+    "version": 1,
+    "responseFormat": "english-abbreviation"
   },
   {
     "id": "exam-net-rip-ospf",
@@ -362,7 +378,8 @@ const EXAM_VARIANTS=[
       "RIP",
       "DHCP"
     ],
-    "version": 1
+    "version": 1,
+    "responseFormat": "word-bank"
   },
   {
     "id": "exam-net-bgp",
@@ -373,7 +390,8 @@ const EXAM_VARIANTS=[
     "keywords": [
       "BGP"
     ],
-    "version": 1
+    "version": 1,
+    "responseFormat": "english-abbreviation"
   },
   {
     "id": "exam-net-tcp-udp",
@@ -385,7 +403,8 @@ const EXAM_VARIANTS=[
       "TCP",
       "UDP"
     ],
-    "version": 1
+    "version": 1,
+    "responseFormat": "english-abbreviation"
   },
   {
     "id": "exam-net-protocol",
@@ -398,7 +417,8 @@ const EXAM_VARIANTS=[
       "의미",
       "타이밍"
     ],
-    "version": 1
+    "version": 1,
+    "responseFormat": "term"
   },
   {
     "id": "exam-it-cloud",
@@ -411,7 +431,8 @@ const EXAM_VARIANTS=[
       "PaaS",
       "SaaS"
     ],
-    "version": 1
+    "version": 1,
+    "responseFormat": "english-abbreviation"
   },
   {
     "id": "exam-sw-class-diagram",
@@ -423,6 +444,164 @@ const EXAM_VARIANTS=[
     "answer": "클래스 다이어그램(Class Diagram)",
     "keywords": [
       "클래스 다이어그램"
+    ],
+    "responseFormat": "term"
+  },
+  {
+    "id": "exam-format-net-icmp-0",
+    "conceptId": "net-icmp",
+    "responseFormat": "english-either",
+    "quizType": "term",
+    "version": 1,
+    "prompt": "IP 패킷 전달 중 발생한 오류와 진단 정보를 제어 메시지로 전달하는 프로토콜의 명칭을 영문 전체 이름 또는 약어로 쓰시오.",
+    "answer": "ICMP 또는 Internet Control Message Protocol",
+    "keywords": [
+      "ICMP",
+      "Internet Control Message Protocol"
+    ]
+  },
+  {
+    "id": "exam-format-net-nat-1",
+    "conceptId": "net-nat",
+    "responseFormat": "english-abbreviation",
+    "quizType": "term",
+    "version": 1,
+    "prompt": "내부 네트워크의 사설 IP 주소를 외부 통신에 사용할 공인 IP 주소로 변환하는 기술의 명칭을 영문 약어로 쓰시오.",
+    "answer": "NAT",
+    "keywords": [
+      "NAT"
+    ]
+  },
+  {
+    "id": "exam-format-it-sso-2",
+    "conceptId": "it-sso",
+    "responseFormat": "english-full",
+    "quizType": "term",
+    "version": 1,
+    "prompt": "한 번 인증한 사용자가 연계된 여러 서비스에 다시 로그인하지 않고 접근하도록 하는 기술의 영문 전체 이름을 쓰시오.",
+    "answer": "Single Sign-On",
+    "keywords": [
+      "Single Sign-On"
+    ]
+  },
+  {
+    "id": "exam-format-net-arp-3",
+    "conceptId": "net-arp",
+    "responseFormat": "english-full",
+    "quizType": "term",
+    "version": 1,
+    "prompt": "같은 링크에서 IPv4 주소에 대응하는 MAC 주소를 알아내는 프로토콜의 영문 전체 이름을 쓰시오.",
+    "answer": "Address Resolution Protocol",
+    "keywords": [
+      "Address Resolution Protocol"
+    ]
+  },
+  {
+    "id": "exam-format-net-dns-4",
+    "conceptId": "net-dns",
+    "responseFormat": "english-abbreviation",
+    "quizType": "term",
+    "version": 1,
+    "prompt": "도메인 이름에 대응하는 IP 주소 등을 조회하는 분산 이름 체계의 명칭을 영문 약어로 쓰시오.",
+    "answer": "DNS",
+    "keywords": [
+      "DNS"
+    ]
+  },
+  {
+    "id": "exam-format-net-dhcp-5",
+    "conceptId": "net-dhcp",
+    "responseFormat": "english-either",
+    "quizType": "term",
+    "version": 1,
+    "prompt": "네트워크에 연결한 장치에 IP 주소, 서브넷 마스크, 기본 게이트웨이 등의 설정을 자동으로 제공하는 프로토콜의 명칭을 영문 전체 이름 또는 약어로 쓰시오.",
+    "answer": "DHCP 또는 Dynamic Host Configuration Protocol",
+    "keywords": [
+      "DHCP",
+      "Dynamic Host Configuration Protocol"
+    ]
+  },
+  {
+    "id": "exam-format-net-packet-6",
+    "conceptId": "net-packet",
+    "responseFormat": "term",
+    "quizType": "multi-term",
+    "version": 1,
+    "prompt": "다음 패킷 교환 방식의 명칭을 각각 쓰시오.\n① 데이터를 보내기 전에 논리적인 경로를 설정하고 그 경로를 따라 패킷을 전달한다.\n② 사전 경로 설정 없이 각 패킷의 목적지 정보를 이용하여 개별적으로 전달한다.",
+    "answer": "① 가상 회선(Virtual Circuit)\n② 데이터그램(Datagram)",
+    "keywords": [
+      "가상 회선",
+      "데이터그램"
+    ]
+  },
+  {
+    "id": "exam-format-net-osi-7",
+    "conceptId": "net-osi",
+    "responseFormat": "term",
+    "quizType": "multi-term",
+    "version": 1,
+    "prompt": "다음 설명에 해당하는 OSI 참조 모델의 계층을 각각 쓰시오.\n① 전송 매체를 통해 비트 신호를 전달하며 전기적·기계적 특성을 규정한다.\n② 직접 연결된 노드 사이에서 프레임을 전달하고 오류 검출을 수행한다.\n③ 데이터 표현 형식의 변환과 암호화·압축을 담당한다.",
+    "answer": "① 물리 계층(Physical Layer)\n② 데이터 링크 계층(Data Link Layer)\n③ 표현 계층(Presentation Layer)",
+    "keywords": [
+      "물리 계층",
+      "데이터 링크 계층",
+      "표현 계층"
+    ]
+  },
+  {
+    "id": "exam-format-net-layer-role-8",
+    "conceptId": "net-layer-role",
+    "responseFormat": "word-bank",
+    "quizType": "multi-term",
+    "version": 1,
+    "prompt": "다음 기능을 담당하는 OSI 계층을 보기에서 찾아 쓰시오.\n① 논리 주소를 이용하여 목적지까지의 경로를 선택하고 패킷을 전달한다.\n② 종단 간 통신을 제공하며 프로토콜에 따라 흐름 제어와 신뢰성 있는 전달을 지원한다.",
+    "answer": "① Network Layer\n② Transport Layer",
+    "keywords": [
+      "Network Layer",
+      "Transport Layer"
+    ],
+    "choices": [
+      "Session Layer",
+      "Network Layer",
+      "Physical Layer",
+      "Transport Layer",
+      "Presentation Layer"
+    ]
+  },
+  {
+    "id": "exam-format-net-protocol-9",
+    "conceptId": "net-protocol",
+    "responseFormat": "term",
+    "quizType": "term",
+    "version": 1,
+    "prompt": "서로 다른 통신 장치가 데이터를 교환할 때 따르도록 정한 공통 규칙과 절차를 가리키는 용어를 쓰시오.",
+    "answer": "프로토콜(Protocol)",
+    "keywords": [
+      "프로토콜"
+    ]
+  },
+  {
+    "id": "exam-format-it-json-10",
+    "conceptId": "it-json",
+    "responseFormat": "english-full",
+    "quizType": "term",
+    "version": 1,
+    "prompt": "키와 값의 쌍 및 배열로 데이터를 표현하는 텍스트 형식인 JSON의 영문 전체 이름을 쓰시오.",
+    "answer": "JavaScript Object Notation",
+    "keywords": [
+      "JavaScript Object Notation"
+    ]
+  },
+  {
+    "id": "exam-format-it-sso-11",
+    "conceptId": "it-sso",
+    "responseFormat": "english-abbreviation",
+    "quizType": "term",
+    "version": 1,
+    "prompt": "사용자가 한 번의 인증으로 연계된 여러 서비스에 접근할 수 있게 하는 기술의 명칭을 영문 약어로 쓰시오.",
+    "answer": "SSO",
+    "keywords": [
+      "SSO"
     ]
   }
 ].map(v=>{
@@ -454,6 +633,20 @@ function questionForConcept(original,allowedIds=null){
 
 
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+
+function responseInstructions(q){
+ const f=q.responseFormat||(q.choices?'word-bank':q.prompt.includes('영문 약어')?'english-abbreviation':'term');
+ const prefix=isMultiTerm(q)?'번호별로 ':'';
+ const instructions={
+  'english-full':['영문 전체 이름',prefix+'약어를 풀어 영어로 작성하세요.','영문 전체 이름을 정확히 썼는지 확인하세요. 약어만 쓴 경우에는 정답 조건을 충족하지 않습니다.'],
+  'english-abbreviation':['영문 약어',prefix+'영어 약어로 작성하세요.','요구한 영문 약어를 썼는지 확인하세요. 한글 명칭만 쓴 경우에는 정답 조건을 충족하지 않습니다.'],
+  'english-either':['영문 전체 이름 또는 약어',prefix+'영문 전체 이름과 약어 중 하나를 작성하세요.','영문 전체 이름 또는 약어 중 하나가 맞으면 됩니다. 한글 명칭만 쓰는 형식은 아닙니다.'],
+  'word-bank':['보기의 용어',prefix+'보기에서 알맞은 용어를 찾아 그대로 작성하세요.','보기에서 고른 용어와 각 답의 위치를 확인하세요.'],
+  'term':['용어·명칭',isMultiTerm(q)?'번호별 명칭을 줄마다 작성하세요.':'해당하는 명칭을 짧게 작성하세요.','정답과 같은 용어인지 확인하세요. 통용되는 한글·영문 명칭은 해설을 보고 판단하세요.']
+ };
+ return instructions[f]||instructions.term;
+}
 
 function examMaterials(q){
  const choices=Array.isArray(q.choices)&&q.choices.length<=20
@@ -583,7 +776,7 @@ function quiz(){
   const s=active();if(!s){page='home';return home();}const i=s.index,a=s.items[i],q=a.question,c=C.counts(s),done=s.items.length-c.ungraded;
   if(isSqlSpelling(q))return sqlQuiz(s,a,q);
   const term=isTermRecall(q);
-  return `<section class="quiz-shell"><div class="section-heading"><div><span class="eyebrow">${fmt(s.startedAt)} · ${esc(sessionLabel(s))}</span><h1>한 장씩, 내 답으로.</h1></div><button class="text-button" data-nav="home">잠시 쉬기</button></div><div class="progress-meta"><strong>문제 ${String(i+1).padStart(2,'0')} <span>/ ${s.items.length}</span></strong><span>${done}개 평가 완료</span></div><progress value="${done}" max="${s.items.length}" aria-label="평가 완료한 문제 수"></progress><article class="question-card ${term?'term-question':isSqlCode(q)?'sql-code-question':''}"><div class="card-top"><span class="category-label">${q.diagram?'그림 판별 · ':q.choices?'보기에서 찾기 · ':isMultiTerm(q)?'빈칸 채우기 · ':term?'용어 맞히기 · ':''}${esc(q.category)}</span><div>${badges(q)}</div></div><h2 id="question-title">${esc(q.prompt)}</h2>${examMaterials(q)}${isSqlCode(q)?`<pre class="sql-code">${esc(q.code)}</pre>`:''}<label class="answer-label" for="answer">${isSqlCode(q)?'빈칸 답안':term?'용어·명칭':'내 답안'} <small>${isSqlCode(q)?'①·②에 들어갈 영어 키워드를 줄마다 적으세요.':isMultiTerm(q)?'번호별 명칭을 줄마다 적어 보세요.':term?'짧은 명칭을 직접 적어 보세요.':'핵심 단어부터 차근차근 써 보세요.'}</small></label><textarea id="answer" class="${term||isSqlCode(q)?'term-answer':''}" maxlength="${isMultiTerm(q)||isSqlCode(q)?300:term?120:20000}" rows="${isMultiTerm(q)?5:isSqlCode(q)?3:term?2:5}" placeholder="여기에 답을 작성하세요." ${a.revealed?'readonly':''}>${esc(a.draft)}</textarea><div class="input-foot"><span id="save-state">${notice?'저장 상태를 확인해 주세요.':'이 브라우저에 자동 저장'}</span><span id="char-count">${a.draft.length.toLocaleString()} / ${isMultiTerm(q)||isSqlCode(q)?'300':term?'120':'20,000'}자</span></div>${a.revealed?`<section class="answer-panel"><span class="eyebrow">${isSqlCode(q)?'정답 SQL 키워드':term?'정답 용어':'모범답안'}</span><p>${esc(q.answer)}</p>${englishLine(q)}${term?`<details class="concept-more"><summary>설명 다시 보기</summary><p class="explanation">${esc(q.explanation)}</p></details>`:`<div class="keywords">${q.keywords.map(k=>`<span>${esc(k)}</span>`).join('')}</div><p class="explanation">${esc(q.explanation)}</p>`}</section><div class="self-rating"><h3>${term?'명칭을 맞혔나요?':'내 답을 평가해 보세요.'}</h3><p>${isSqlCode(q)?'모든 키워드의 철자와 위치를 맞히면 정답, 일부만 맞히면 부분정답으로 표시하세요.':isMultiTerm(q)?'모든 빈칸을 맞히면 정답, 일부만 맞히면 부분정답으로 표시하세요.':term?'정답과 같은 용어를 썼다면 정답으로 표시하세요. 통용되는 다른 명칭은 해설을 보고 판단하세요.':'핵심 의미를 담았다면 표현이 달라도 괜찮아요.'}</p><div class="rating-buttons">${C.RATINGS.map(k=>`<button class="rating ${k} ${a.rating===k?'selected':''}" aria-pressed="${a.rating===k}" data-rating="${k}" ${blocked?'disabled':''}>${k==='correct'?'✓':k==='partial'?'△':'×'} ${labels[k]}</button>`).join('')}</div></div>`:`<div class="reveal-row"><p>${isSqlCode(q)?'코드의 빈칸을 직접 채운 뒤 확인해 보세요.':term?'명칭을 먼저 떠올려 적어 보세요.':'빈 답안으로 확인해도 괜찮아요.'}</p><button class="primary" data-action="reveal" ${blocked?'disabled':''}>정답 확인</button></div>`}${s.mode==='bundle'&&BUNDLES.some(b=>b.id===s.bundle.id)?'<button class="text-button" data-action="quiz-concept">이 문제 개념 다시 보기</button>':''}${isTermRecall(q)&&s.mode!=='bundle'?`<button class="text-button" data-term-concept="${esc(q.conceptId||q.id.slice(5))}">이 용어 개념 읽기</button>`:''}${sources(q)}</article><div class="quiz-controls"><button class="secondary" data-action="prev" ${i===0?'disabled':''}>이전 문제</button><span>${a.rating?`내 평가: ${labels[a.rating]}`:'정답을 확인하고 평가해 주세요.'}</span><button class="primary" data-action="next" ${!a.rating||blocked?'disabled':''}>${i===s.items.length-1?'미평가 문제로':'다음 문제 →'}</button></div><div class="question-dots" aria-label="문제 이동">${s.items.map((x,j)=>`<button data-index="${j}" class="${x.rating||''} ${i===j?'current':''}" aria-label="${j+1}번 문제, ${labels[x.rating||'ungraded']}" ${i===j?'aria-current="step"':''}>${j+1}</button>`).join('')}</div></section>`;
+  return `<section class="quiz-shell"><div class="section-heading"><div><span class="eyebrow">${fmt(s.startedAt)} · ${esc(sessionLabel(s))}</span><h1>한 장씩, 내 답으로.</h1></div><button class="text-button" data-nav="home">잠시 쉬기</button></div><div class="progress-meta"><strong>문제 ${String(i+1).padStart(2,'0')} <span>/ ${s.items.length}</span></strong><span>${done}개 평가 완료</span></div><progress value="${done}" max="${s.items.length}" aria-label="평가 완료한 문제 수"></progress><article class="question-card ${term?'term-question':isSqlCode(q)?'sql-code-question':''}"><div class="card-top"><span class="category-label">${q.diagram?'그림 판별 · ':q.choices?'보기에서 찾기 · ':isMultiTerm(q)?'빈칸 채우기 · ':term?'용어 맞히기 · ':''}${esc(q.category)}</span><div>${badges(q)}</div></div><h2 id="question-title">${esc(q.prompt)}</h2>${examMaterials(q)}${isSqlCode(q)?`<pre class="sql-code">${esc(q.code)}</pre>`:''}<label class="answer-label" for="answer">${isSqlCode(q)?'빈칸 답안':term?responseInstructions(q)[0]:'내 답안'} <small>${isSqlCode(q)?'①·②에 들어갈 영어 키워드를 줄마다 적으세요.':term?responseInstructions(q)[1]:'핵심 단어부터 차근차근 써 보세요.'}</small></label><textarea id="answer" class="${term||isSqlCode(q)?'term-answer':''}" maxlength="${isMultiTerm(q)||isSqlCode(q)?300:term?120:20000}" rows="${isMultiTerm(q)?5:isSqlCode(q)?3:term?2:5}" placeholder="여기에 답을 작성하세요." ${a.revealed?'readonly':''}>${esc(a.draft)}</textarea><div class="input-foot"><span id="save-state">${notice?'저장 상태를 확인해 주세요.':'이 브라우저에 자동 저장'}</span><span id="char-count">${a.draft.length.toLocaleString()} / ${isMultiTerm(q)||isSqlCode(q)?'300':term?'120':'20,000'}자</span></div>${a.revealed?`<section class="answer-panel"><span class="eyebrow">${isSqlCode(q)?'정답 SQL 키워드':term?'정답 용어':'모범답안'}</span><p>${esc(q.answer)}</p>${englishLine(q)}${term?`<details class="concept-more"><summary>설명 다시 보기</summary><p class="explanation">${esc(q.explanation)}</p></details>`:`<div class="keywords">${q.keywords.map(k=>`<span>${esc(k)}</span>`).join('')}</div><p class="explanation">${esc(q.explanation)}</p>`}</section><div class="self-rating"><h3>${term?'명칭을 맞혔나요?':'내 답을 평가해 보세요.'}</h3><p>${isSqlCode(q)?'모든 키워드의 철자와 위치를 맞히면 정답, 일부만 맞히면 부분정답으로 표시하세요.':term?responseInstructions(q)[2]+(isMultiTerm(q)?' 모두 맞히면 정답, 일부만 맞히면 부분정답으로 표시하세요.':''):'핵심 의미를 담았다면 표현이 달라도 괜찮아요.'}</p><div class="rating-buttons">${C.RATINGS.map(k=>`<button class="rating ${k} ${a.rating===k?'selected':''}" aria-pressed="${a.rating===k}" data-rating="${k}" ${blocked?'disabled':''}>${k==='correct'?'✓':k==='partial'?'△':'×'} ${labels[k]}</button>`).join('')}</div></div>`:`<div class="reveal-row"><p>${isSqlCode(q)?'코드의 빈칸을 직접 채운 뒤 확인해 보세요.':term?'명칭을 먼저 떠올려 적어 보세요.':'빈 답안으로 확인해도 괜찮아요.'}</p><button class="primary" data-action="reveal" ${blocked?'disabled':''}>정답 확인</button></div>`}${s.mode==='bundle'&&BUNDLES.some(b=>b.id===s.bundle.id)?'<button class="text-button" data-action="quiz-concept">이 문제 개념 다시 보기</button>':''}${isTermRecall(q)&&s.mode!=='bundle'?`<button class="text-button" data-term-concept="${esc(q.conceptId||q.id.slice(5))}">이 용어 개념 읽기</button>`:''}${sources(q)}</article><div class="quiz-controls"><button class="secondary" data-action="prev" ${i===0?'disabled':''}>이전 문제</button><span>${a.rating?`내 평가: ${labels[a.rating]}`:'정답을 확인하고 평가해 주세요.'}</span><button class="primary" data-action="next" ${!a.rating||blocked?'disabled':''}>${i===s.items.length-1?'미평가 문제로':'다음 문제 →'}</button></div><div class="question-dots" aria-label="문제 이동">${s.items.map((x,j)=>`<button data-index="${j}" class="${x.rating||''} ${i===j?'current':''}" aria-label="${j+1}번 문제, ${labels[x.rating||'ungraded']}" ${i===j?'aria-current="step"':''}>${j+1}</button>`).join('')}</div></section>`;
 }
 function result(){const s=state.sessions.find(s=>s.id===recordId);if(!s){page='history';return history();}return `<section class="wide-section"><div class="result-heading"><span class="eyebrow">${s.items.length}장의 기록이 쌓였어요</span><h1>${s.bundle?.id===SQL_BUNDLE_ID?'SQL 영문 쓰기 완료.':s.bundle?.id===SQL_CODE_BUNDLE_ID?'SQL 구문 빈칸 완료.':s.bundle?.id?.startsWith('term-recall:')?'용어 맞히기 완료.':'오늘의 개념 학습 완료.'}</h1><p>${fmt(s.startedAt)} · ${s.bundle?.id===SQL_BUNDLE_ID?'철자와 띄어쓰기를 확인한 연습 결과입니다. 틀리거나 두 번째에 맞힌 명령어는 다음 연습에서 우선 나와요.':s.bundle?.id===SQL_CODE_BUNDLE_ID?'영어 SQL 키워드와 구문을 직접 써 보고 자기평가한 기록입니다.':s.bundle?.id?.startsWith('term-recall:')?'명칭을 직접 적고 자기평가한 기록입니다. 헷갈린 용어는 다음 연습에서 우선 나와요.':'실제 시험 점수가 아닌 자기평가 결과입니다.'}</p></div>${stats(s)}<div class="result-actions"><button class="primary" data-action="review-result">이번 회차 복습</button>${bundleResultActions(s)}</div><div class="result-preview">${s.items.filter(a=>a.rating!=='correct').slice(0,5).map(a=>`<p><span class="result-label ${a.rating}">${labels[a.rating]}</span>${esc(a.question.prompt)}</p>`).join('')||'<p>모든 문제를 정답으로 평가했어요. 시간이 지난 뒤 다시 떠올려 보세요.</p>'}</div></section>`;}
 function history(){
