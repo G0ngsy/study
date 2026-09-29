@@ -687,12 +687,21 @@ function toast(message){const t=document.getElementById('toast');t.textContent=m
 function active(){return state.sessions.find(s=>s.id===state.activeSessionId&&s.status==='active');}
 function hasWork(s){return s.items.some(a=>a.rating||a.revealed||a.draft?.trim());}
 function resumable(bundleId=null){
- const matches=state.sessions.filter(s=>s.status==='active'&&
-   (bundleId?s.mode==='bundle'&&s.bundle?.id===bundleId:s.mode==='random'));
+ const scope=s=>bundleId?s.mode==='bundle'&&s.bundle?.id===bundleId:s.mode==='random';
+ const finished=state.sessions.filter(s=>scope(s)&&s.status==='completed');
+ const matches=state.sessions.filter(s=>scope(s)&&s.status==='active'&&!finished.some(done=>
+   (s.mode==='random'||done.bundle?.version===s.bundle?.version)&&
+   Date.parse(s.startedAt)<=Date.parse(done.completedAt||done.updatedAt)));
  return matches.sort((a,b)=>{
    const progress=x=>x.items.reduce((n,item)=>n+(item.rating?3:item.revealed?2:item.draft?.trim()?1:0),0);
    return progress(b)-progress(a)||Date.parse(b.updatedAt)-Date.parse(a.updatedAt);
  })[0]||null;
+}
+function bundleStatus(b){
+ const pending=resumable(b.id),done=completed(b);
+ const progress=pending?(pending.items.length-C.counts(pending).ungraded)+'/'+pending.items.length:'';
+ return done?'퀴즈 완료'+(pending?' · 복습 '+progress+' 진행 중':''):
+   pending?'퀴즈 '+progress+' 진행 중':'퀴즈 미완료';
 }
 
 function stamp(s){s.updatedAt=new Date().toISOString();}
@@ -728,7 +737,7 @@ function home(){
 let selectedPart=BUNDLES[0].category;
 function part(){
  const bundles=BUNDLES.filter(b=>b.category===selectedPart);
- return `<section class="wide-section"><button class="text-button" data-nav="home">← 전체 파트</button><span class="eyebrow">개념 읽기 → 묶음 퀴즈</span><h1>${esc(selectedPart)}</h1><p class="lead">순서대로 시작해도, 필요한 묶음부터 골라도 좋아요.</p><div class="lesson-list">${bundles.map((b,i)=>`<article class="panel"><span class="eyebrow">묶음 ${i+1} · ${b.questionIds.length}개 개념</span><h2>${esc(b.title)}</h2><p>${b.questionIds.map(id=>esc(NOTES[id].title)).join(' · ')}</p><p class="lesson-status">읽음 ${b.questionIds.filter(isRead).length}/${b.questionIds.length} · ${resumable(b.id)?`퀴즈 ${resumable(b.id).items.length-C.counts(resumable(b.id)).ungraded}/${resumable(b.id).items.length} 진행 중`:completed(b)?'퀴즈 완료':'퀴즈 미완료'}</p><div class="study-actions"><button class="primary" data-lesson="${b.id}">개념 보기</button><button class="secondary" data-bundle-quiz="${b.id}">${resumable(b.id)?'퀴즈 이어 풀기':'묶음 퀴즈'}</button></div></article>`).join('')}</div></section>`;
+ return `<section class="wide-section"><button class="text-button" data-nav="home">← 전체 파트</button><span class="eyebrow">개념 읽기 → 묶음 퀴즈</span><h1>${esc(selectedPart)}</h1><p class="lead">순서대로 시작해도, 필요한 묶음부터 골라도 좋아요.</p><div class="lesson-list">${bundles.map((b,i)=>`<article class="panel"><span class="eyebrow">묶음 ${i+1} · ${b.questionIds.length}개 개념</span><h2>${esc(b.title)}</h2><p>${b.questionIds.map(id=>esc(NOTES[id].title)).join(' · ')}</p><p class="lesson-status">읽음 ${b.questionIds.filter(isRead).length}/${b.questionIds.length} · ${bundleStatus(b)}</p><div class="study-actions"><button class="primary" data-lesson="${b.id}">개념 보기</button><button class="secondary" data-bundle-quiz="${b.id}">${resumable(b.id)?'퀴즈 이어 풀기':completed(b)?'퀴즈 다시 풀기':'묶음 퀴즈'}</button></div></article>`).join('')}</div></section>`;
 }
 function saveCursor(){
  const b=lesson();if(!b||blocked)return;
