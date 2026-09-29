@@ -3,7 +3,59 @@
 const C=QuizCore,BANK=window.QUIZ_BANK,app=document.getElementById('app');
 const NOTES=window.LEARNING_NOTES,BUNDLES=window.LEARNING_BUNDLES,ENGLISH=window.LEARNING_ENGLISH||{};
 const TERM_IDS=["sw-waterfall","sw-prototype","sw-spiral","sw-agile","sw-scrum-master","sw-uml","sw-usecase","sw-sequence","sw-deployment","sw-encapsulation","sw-inheritance","sw-polymorphism","sw-srp","sw-ocp","sw-lsp","sw-isp","sw-dip","sw-mvc","sw-scm","test-case","test-equivalence","test-boundary","test-pesticide","test-absence","test-regression","test-oracle","db-domain","db-candidate","db-normalization","db-denormalization","db-index","db-partition","db-independence","db-distributed","db-bcnf","os-pcb","os-context","os-rr","os-deadlock","os-working-set","os-thrashing","os-ipc","os-opt","net-osi","net-arp","net-dns","net-dhcp","net-icmp","net-nat","net-bgp","net-vlan","sec-hash","sec-salt","sec-rsa","sec-dh","sec-syn","sec-smurf","sec-land","sec-teardrop","sec-waf","sec-vpn","sec-ransomware","sec-apt","sec-watering","sec-credential","sec-backdoor","sec-aslr","sec-canary","it-eai","it-ajax","it-json","it-drm","it-sso","it-mqtt","it-digital-twin","pattern-abstract-factory","pattern-builder","pattern-factory-method","pattern-prototype","pattern-singleton","pattern-adapter","pattern-decorator","pattern-facade","pattern-flyweight","pattern-proxy","pattern-chain","pattern-observer","pattern-strategy","pattern-template-method","pattern-visitor"];
+const FORMAL_TERM_PROMPTS={
+  "sw-waterfall": "요구 분석부터 시험까지 각 단계를 순차적으로 완료한 뒤 다음 단계로 진행하는 개발 모형은 무엇인가?",
+  "sw-prototype": "사용자에게 시제품을 먼저 제시하고 피드백을 받아 요구사항을 구체화하는 개발 모형은 무엇인가?",
+  "sw-agile": "짧은 개발 주기를 반복하고 고객의 변화에 유연하게 대응하는 개발 방법론은 무엇인가?",
+  "sw-scrum-master": "스크럼 팀이 절차를 실천하도록 돕고 장애 요인 제거를 지원하는 역할은 무엇인가?",
+  "sw-uml": "시스템의 구조와 동작을 표준화된 다이어그램으로 표현하는 모델링 언어는 무엇인가?",
+  "sw-encapsulation": "데이터와 메서드를 하나로 묶고 내부 구현에 대한 직접 접근을 제한하는 객체지향 특성은 무엇인가?",
+  "sw-inheritance": "기존 클래스의 속성과 메서드를 물려받아 새로운 클래스를 정의하는 객체지향 특성은 무엇인가?",
+  "sw-polymorphism": "동일한 메시지에 대해 객체의 실제 타입에 따라 서로 다른 동작을 수행하는 특성은 무엇인가?",
+  "sw-ocp": "확장에는 열려 있고 변경에는 닫혀 있어야 한다는 SOLID 원칙은 무엇인가?",
+  "sw-lsp": "자식 타입을 부모 타입 자리에 사용해도 프로그램의 올바른 동작이 유지되어야 한다는 원칙은 무엇인가?",
+  "sw-dip": "상위 모듈과 하위 모듈 모두 구체 구현보다 추상화에 의존해야 한다는 원칙은 무엇인가?",
+  "sw-mvc": "데이터와 업무 처리, 화면 표시, 입력 제어를 분리하는 아키텍처 패턴은 무엇인가?",
+  "sw-scm": "소프트웨어 산출물의 변경을 식별·통제하고 이력을 관리하는 활동은 무엇인가?",
+  "test-boundary": "입력 범위의 경계와 그 주변 값을 골라 오류를 찾는 테스트 설계 기법은 무엇인가?",
+  "test-absence": "결함이 거의 없더라도 사용자의 요구를 충족하지 못하면 품질을 보장할 수 없다는 테스트 원리는 무엇인가?",
+  "test-oracle": "테스트의 실제 결과가 옳은지 비교·판정하는 기준은 무엇인가?",
+  "test-case": "입력값, 실행 조건, 예상 결과를 한데 기록한 테스트 항목은 무엇인가?",
+  "db-independence": "데이터베이스의 한 수준에서 구조가 바뀌어도 상위 수준의 응용 프로그램에 영향을 주지 않는 성질은 무엇인가?",
+  "db-domain": "관계형 데이터베이스에서 한 속성이 가질 수 있는 허용 값의 집합은 무엇인가?",
+  "db-candidate": "튜플을 유일하게 식별할 수 있고 최소성을 만족하는 키는 무엇인가?",
+  "db-normalization": "테이블을 분해하여 데이터 중복과 삽입·삭제·갱신 이상을 줄이는 과정은 무엇인가?",
+  "db-bcnf": "모든 결정자가 슈퍼키가 되도록 요구하는 정규형은 무엇인가?",
+  "db-denormalization": "조회 성능 등을 위해 정규화된 테이블에 중복을 의도적으로 허용하는 설계 기법은 무엇인가?",
+  "db-index": "테이블의 행을 빠르게 찾기 위해 검색 키와 위치 정보를 별도로 관리하는 구조는 무엇인가?",
+  "db-partition": "큰 테이블을 기준에 따라 여러 부분으로 나누어 관리하는 기법은 무엇인가?",
+  "db-distributed": "분산 데이터베이스에서 실제 데이터 저장 위치를 사용자가 알 필요가 없도록 하는 투명성은 무엇인가?",
+  "os-pcb": "프로세스의 상태, 프로그램 카운터, 레지스터 값 등을 운영체제가 보관하는 자료구조는 무엇인가?",
+  "os-context": "CPU를 다른 프로세스에 할당할 때 현재 프로세스의 상태를 저장하고 다음 프로세스의 상태를 복원하는 과정은 무엇인가?",
+  "os-deadlock": "둘 이상의 프로세스가 서로 점유한 자원을 기다리며 무한히 대기하는 상태는 무엇인가?",
+  "os-opt": "앞으로 가장 오랫동안 참조되지 않을 페이지를 교체 대상으로 선택하는 알고리즘은 무엇인가?",
+  "os-thrashing": "프로세스가 실행보다 페이지 교체에 더 많은 시간을 쓰는 현상은 무엇인가?",
+  "os-working-set": "일정 시간 동안 프로세스가 자주 참조하는 페이지들의 집합은 무엇인가?",
+  "os-ipc": "독립된 프로세스 간에 데이터를 주고받고 동작을 조정하는 기법은 무엇인가?",
+  "net-osi": "네트워크 통신 기능을 일곱 계층으로 나누어 정의한 참조 모델은 무엇인가?",
+  "net-dns": "도메인 이름을 IP 주소 등과 연결하여 조회하는 분산 이름 체계는 무엇인가?",
+  "net-icmp": "IP 네트워크에서 오류와 진단 정보를 전달하는 제어 메시지 프로토콜은 무엇인가?",
+  "net-nat": "사설 IP 주소와 공인 IP 주소를 서로 변환하는 기술은 무엇인가?",
+  "sec-hash": "임의 길이의 입력을 고정 길이의 요약값으로 변환하는 일방향 함수는 무엇인가?",
+  "sec-salt": "비밀번호를 해시할 때 사용자별 무작위 값을 추가해 동일한 비밀번호의 해시값을 다르게 만드는 값은 무엇인가?",
+  "sec-dh": "공개 통신로를 통해 교환한 정보를 바탕으로 양측이 같은 비밀키를 합의하는 방식은 무엇인가?",
+  "sec-vpn": "공용 네트워크 위에 보호된 논리적 통신 경로를 구성해 사설망처럼 사용하는 기술은 무엇인가?",
+  "sec-apt": "특정 조직을 대상으로 장기간 은밀하게 침투해 지속적으로 공격하는 위협은 무엇인가?",
+  "sec-backdoor": "정상적인 인증·보안 절차를 우회해 시스템에 접근할 수 있게 만든 숨은 통로는 무엇인가?",
+  "sec-canary": "스택에 검사용 값을 두어 버퍼 오버플로로 인한 메모리 손상을 탐지하는 보호 기법은 무엇인가?",
+  "it-eai": "기업 내 서로 다른 애플리케이션을 연결하여 데이터와 업무 흐름을 통합하는 기술은 무엇인가?",
+  "it-ajax": "웹 페이지 전체를 다시 불러오지 않고 서버와 비동기 통신으로 일부 화면만 갱신하는 기법은 무엇인가?",
+  "it-json": "객체의 키·값과 배열 구조를 텍스트로 표현하는 데이터 교환 형식은 무엇인가?",
+  "it-drm": "디지털 콘텐츠의 사용 권한과 이용 조건을 통제하는 기술은 무엇인가?",
+  "it-digital-twin": "현실의 대상과 연결된 가상 모델로 상태를 분석하고 변화를 예측하는 기술은 무엇인가?"
+};
 function termPrompt(note,original){
+ if(FORMAL_TERM_PROMPTS[original.id])return FORMAL_TERM_PROMPTS[original.id];
  const prompt=original.prompt.trim();
  if(prompt.endsWith('무엇인가?')&&!prompt.includes(note.title))return prompt;
  const pattern=prompt.match(/^다음 설명에 해당하는 디자인 패턴의 이름과 분류를 쓰시오\.\s+([\s\S]+)$/);
@@ -50,14 +102,21 @@ const SQL_SPELLING=[
  ['DISTINCT','조회 결과의 중복을 제거하는 SQL 키워드를 영어로 쓰세요.','선택한 열 조합의 중복을 제거해요.','sql-distinct']
 ].map(([answer,prompt,explanation,sourceId])=>({
  id:'sql-spell-'+answer.toLowerCase().replaceAll(' ','-'),version:1,
- category:'SQL 영문 쓰기',prompt,answer,keywords:[answer],explanation,
+ category:'SQL 영문 쓰기',prompt:prompt.replace(/쓰세요\.$/,'쓰시오.'),answer,keywords:[answer],explanation,
  sources:BANK.find(q=>q.id===sourceId).sources,badges:[]
 }));
 const isSqlSpelling=q=>q?.quizType==='sql-spell'||q?.id?.startsWith('sql-spell-');
 const SQL_CODE_BUNDLE_ID='sql-code';
+const SQL_CODE_PROMPTS={
+  "sql-code-foreign-key": "다음 CREATE TABLE 문에서 ①·②에 들어갈 SQL 키워드를 각각 쓰시오.",
+  "sql-code-group": "다음 SQL 문은 직원 수가 3명 이상인 부서만 조회한다. ①·②에 들어갈 SQL 절을 쓰시오.",
+  "sql-code-distinct": "다음 SQL 문은 한국 학생의 거주 도시를 중복 없이 조회한다. ①·②에 들어갈 SQL 키워드를 쓰시오.",
+  "sql-code-insert": "다음 SQL 문은 STUDENT 테이블에 행을 추가한다. ①·②에 들어갈 SQL 키워드를 쓰시오.",
+  "sql-code-update": "다음 SQL 문은 학번이 101인 학생의 이름을 변경한다. ①·②에 들어갈 SQL 키워드를 쓰시오."
+};
 const SQL_CODE_BANK=[{"id":"sql-code-foreign-key","prompt":"ENROLLMENT 테이블의 외래 키 제약을 완성하세요. ①·②에 들어갈 영어 SQL 키워드를 적으세요.","code":"CREATE TABLE ENROLLMENT (\n  ENROLL_ID INTEGER PRIMARY KEY,\n  STUDENT_ID INTEGER NOT NULL,\n  CONSTRAINT FK_ENROLL_STUDENT ① KEY (STUDENT_ID)\n    ② STUDENT(STUDENT_ID)\n);","answer":"① FOREIGN\n② REFERENCES","keywords":["FOREIGN","REFERENCES"],"explanation":"FOREIGN KEY는 참조하는 열을 지정하고 REFERENCES는 참조 대상 테이블·열을 지정합니다.","sourceIds":["db-integrity"]},{"id":"sql-code-group","prompt":"부서별 직원 수가 3명 이상인 부서만 조회하려고 합니다. ①·②에 들어갈 영어 SQL 절을 적으세요.","code":"SELECT DEPT_ID, COUNT(*) AS CNT\nFROM EMPLOYEE\n① DEPT_ID\n② COUNT(*) >= 3;","answer":"① GROUP BY\n② HAVING","keywords":["GROUP BY","HAVING"],"explanation":"GROUP BY로 부서별 그룹을 만들고 HAVING으로 집계 결과에 조건을 겁니다.","sourceIds":["sql-having"]},{"id":"sql-code-distinct","prompt":"한국 학생의 거주 도시를 중복 없이 조회하려고 합니다. ①·②에 들어갈 영어 SQL 키워드를 적으세요.","code":"SELECT ① CITY\nFROM STUDENT\n② COUNTRY = 'KR';","answer":"① DISTINCT\n② WHERE","keywords":["DISTINCT","WHERE"],"explanation":"DISTINCT는 조회 결과의 중복을 제거하고 WHERE는 개별 행을 거릅니다.","sourceIds":["sql-distinct","sql-having"]},{"id":"sql-code-insert","prompt":"학생 한 명을 새로 추가하려고 합니다. ①·②에 들어갈 영어 SQL 키워드를 적으세요.","code":"① INTO STUDENT (STUDENT_ID, NAME)\n② (101, '민수');","answer":"① INSERT\n② VALUES","keywords":["INSERT","VALUES"],"explanation":"INSERT INTO 다음에 대상 테이블과 열을 쓰고 VALUES로 넣을 값을 지정합니다.","sourceIds":["sql-language"]},{"id":"sql-code-update","prompt":"학번이 101인 학생의 이름만 변경하려고 합니다. ①·②에 들어갈 영어 SQL 키워드를 적으세요.","code":"① STUDENT\nSET NAME = '지수'\n② STUDENT_ID = 101;","answer":"① UPDATE\n② WHERE","keywords":["UPDATE","WHERE"],"explanation":"UPDATE로 대상 테이블을 정하고 WHERE로 변경할 행을 제한합니다.","sourceIds":["sql-language","sql-having"]}].map(({sourceIds,...q})=>{
  const sources=sourceIds.flatMap(id=>BANK.find(x=>x.id===id).sources);
- return {...q,version:1,sourceIds,category:'SQL 구문 빈칸',sources:[...new Map(sources.map(s=>[s.name+':'+s.page,s])).values()],badges:[]};
+ return {...q,prompt:SQL_CODE_PROMPTS[q.id],version:1,sourceIds,category:'SQL 구문 빈칸',sources:[...new Map(sources.map(s=>[s.name+':'+s.page,s])).values()],badges:[]};
 });
 const isSqlCode=q=>q?.quizType==='sql-code'||q?.id?.startsWith('sql-code-');
 const SQL_CODE_BY_CONCEPT=new Map([['db-integrity',SQL_CODE_BANK[0]],['sql-having',SQL_CODE_BANK[1]],['sql-distinct',SQL_CODE_BANK[2]],['sql-language',SQL_CODE_BANK[3]]]);
@@ -96,6 +155,24 @@ function englishLine(q){
 
 let state=C.empty(),page='home',filter='all',recordId='all',notice='',blocked=false,toastTimer,lessonId=null,conceptIndex=0,returnToQuiz=false,installPrompt=null;
 try{const raw=localStorage.getItem(C.KEY);if(raw)state=C.validateState(JSON.parse(raw));}catch{notice='저장된 기록을 읽을 수 없습니다. 원본을 보존하고 있습니다. 백업 · 복원에서 기록을 복구하세요.';blocked=true;}
+function refreshActivePromptSnapshots(value){
+ for(const session of value.sessions){
+  if(session.status!=='active')continue;
+  for(const item of session.items){
+   const q=item.question;
+   let latest=null;
+   if(q.quizType==='term'||q.id.startsWith('term-'))
+     latest=TERM_BY_CONCEPT.get(q.conceptId||q.id.replace(/^term-/,''));
+   else if(q.quizType==='sql-spell'||q.id.startsWith('sql-spell-'))
+     latest=SQL_SPELLING.find(x=>x.id===q.id||x.answer===q.answer);
+   else if(q.quizType==='sql-code'||q.id.startsWith('sql-code-'))
+     latest=SQL_CODE_BANK.find(x=>x.id===q.id||x.code===q.code);
+   if(latest)q.prompt=latest.prompt;
+  }
+ }
+}
+if(!blocked)refreshActivePromptSnapshots(state);
+
 function toast(message){const t=document.getElementById('toast');t.textContent=message;t.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.hidden=true,4500);}
 function active(){return state.sessions.find(s=>s.id===state.activeSessionId&&s.status==='active');}
 function hasWork(s){return s.items.some(a=>a.rating||a.revealed||a.draft?.trim());}
@@ -281,6 +358,7 @@ app.addEventListener('change',async e=>{
       const incoming=C.validateState(JSON.parse(await f.text()));
       if(blocked&&!confirm('현재 읽을 수 없는 기록을 백업 파일로 복구합니다. 필요하면 먼저 복구용 원본을 내려받으세요. 계속할까요?'))return;
       const next=C.mergeStates(state,incoming);
+      refreshActivePromptSnapshots(next);
       if(!persist(next,{restore:blocked}))throw new Error('저장 공간 또는 브라우저 설정으로 복원하지 못했습니다. 기존 기록은 유지됩니다.');
       render();toast(`${incoming.sessions.length}개 회차를 확인하고 기록을 합쳤습니다.`);
     }catch(err){const m=document.getElementById('import-message');if(m){m.className='storage-warning';m.textContent=`복원하지 않았습니다. ${err instanceof SyntaxError?'올바른 JSON 파일이 아닙니다.':err.message}`;}toast('백업 파일을 확인해 주세요. 기존 기록은 그대로입니다.');}finally{e.target.value='';}
