@@ -3,6 +3,30 @@
 const C=QuizCore,BANK=window.QUIZ_BANK,app=document.getElementById('app');
 const NOTES=window.LEARNING_NOTES,BUNDLES=window.LEARNING_BUNDLES;
 const labels={correct:'정답',partial:'부분정답',wrong:'오답',ungraded:'미평가'};
+const SQL_BUNDLE_ID='sql-spelling';
+const SQL_SPELLING=[
+ ['CREATE','테이블 등 데이터베이스 객체를 새로 만드는 SQL 명령어를 영어로 쓰세요.','새 객체의 구조를 정의하는 DDL 명령어예요.','sql-language'],
+ ['ALTER','기존 테이블의 구조를 변경하는 SQL 명령어를 영어로 쓰세요.','기존 객체의 정의를 변경하는 DDL 명령어예요.','sql-language'],
+ ['DROP','테이블 등 데이터베이스 객체 자체를 삭제하는 SQL 명령어를 영어로 쓰세요.','행만 지우는 DELETE와 구분하세요.','sql-delete'],
+ ['SELECT','테이블의 데이터를 조회하는 SQL 명령어를 영어로 쓰세요.','조회에 사용하는 DML 명령어예요.','sql-language'],
+ ['INSERT','테이블에 새 행을 추가하는 SQL 명령어를 영어로 쓰세요.','새 데이터를 넣는 DML 명령어예요.','sql-language'],
+ ['UPDATE','기존 행의 값을 수정하는 SQL 명령어를 영어로 쓰세요.','기존 데이터를 변경하는 DML 명령어예요.','sql-language'],
+ ['DELETE','테이블의 행을 삭제하는 SQL 명령어를 영어로 쓰세요.','테이블의 구조는 남는 DML 명령어예요.','sql-delete'],
+ ['GRANT','사용자에게 데이터베이스 권한을 부여하는 SQL 명령어를 영어로 쓰세요.','권한을 주는 DCL 명령어예요.','sql-language'],
+ ['REVOKE','사용자에게 부여한 데이터베이스 권한을 회수하는 SQL 명령어를 영어로 쓰세요.','부여한 권한을 거두는 DCL 명령어예요.','sql-language'],
+ ['COMMIT','트랜잭션의 변경을 확정하는 SQL 명령어를 영어로 쓰세요.','트랜잭션을 확정해 변경 사항을 반영해요.','sql-language'],
+ ['ROLLBACK','트랜잭션의 변경을 취소하는 SQL 명령어를 영어로 쓰세요.','트랜잭션을 되돌리는 명령어예요.','sql-language'],
+ ['WHERE','그룹화 전에 개별 행에 조건을 거는 SQL 키워드를 영어로 쓰세요.','개별 행을 먼저 걸러요.','sql-having'],
+ ['GROUP BY','같은 값의 행을 그룹으로 묶는 SQL 절을 영어로 쓰세요.','집계할 그룹을 만들 때 사용해요.','sql-having'],
+ ['HAVING','집계한 그룹에 조건을 거는 SQL 키워드를 영어로 쓰세요.','GROUP BY로 만든 그룹을 걸러요.','sql-having'],
+ ['DISTINCT','조회 결과의 중복을 제거하는 SQL 키워드를 영어로 쓰세요.','선택한 열 조합의 중복을 제거해요.','sql-distinct']
+].map(([answer,prompt,explanation,sourceId])=>({
+ id:'sql-spell-'+answer.toLowerCase().replaceAll(' ','-'),version:1,
+ category:'SQL 영문 쓰기',prompt,answer,keywords:[answer],explanation,
+ sources:BANK.find(q=>q.id===sourceId).sources,badges:[]
+}));
+const isSqlSpelling=q=>q?.id?.startsWith('sql-spell-');
+
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let state=C.empty(),page='home',filter='all',recordId='all',notice='',blocked=false,toastTimer,lessonId=null,conceptIndex=0,returnToQuiz=false,installPrompt=null;
 try{const raw=localStorage.getItem(C.KEY);if(raw)state=C.validateState(JSON.parse(raw));}catch{notice='저장된 기록을 읽을 수 없습니다. 원본을 보존하고 있습니다. 백업 · 복원에서 기록을 복구하세요.';blocked=true;}
@@ -32,7 +56,7 @@ function installPanel(){
 function home(){
  const current=active(),cursor=state.learning.cursor;
  return `<section class="wide-section study-home"><span class="eyebrow">조금씩 읽고, 내 말로 기억하기</span><h1>개념부터, 한 장씩.</h1><p class="lead">원하는 파트를 골라 개념 5개를 읽고 바로 퀴즈로 확인해요.<br>읽음 표시는 학습 흔적이에요. 이해했는지는 퀴즈로 확인해 보세요.</p>
- <div class="study-actions">${cursor&&BUNDLES.some(b=>b.id===cursor.bundleId)?'<button class="primary" data-action="continue-study">읽던 개념 이어 보기</button>':''}${current?`<button class="secondary" data-action="resume">퀴즈 이어 풀기 · ${current.items.length-C.counts(current).ungraded}/${current.items.length}</button>`:''}<button class="secondary" data-action="start">전체 랜덤 30문제</button></div>
+ <div class="study-actions">${cursor&&BUNDLES.some(b=>b.id===cursor.bundleId)?'<button class="primary" data-action="continue-study">읽던 개념 이어 보기</button>':''}${current?`<button class="secondary" data-action="resume">퀴즈 이어 풀기 · ${current.items.length-C.counts(current).ungraded}/${current.items.length}</button>`:''}<button class="secondary" data-action="start">전체 랜덤 30문제</button><button class="secondary" data-action="start-sql">SQL 영문 5개 쓰기</button></div>
  <div class="part-grid">${[...new Set(BUNDLES.map(b=>b.category))].map((category,i)=>{
  const bundles=BUNDLES.filter(b=>b.category===category),ids=bundles.flatMap(b=>b.questionIds),read=ids.filter(isRead).length,done=bundles.filter(completed).length;
  return `<article class="part-card"><span class="eyebrow">PART ${String(i+1).padStart(2,'0')}</span><h2>${esc(category)}</h2><p>읽은 개념 ${read} / ${ids.length}<br>퀴즈 완료 ${done} / ${bundles.length}묶음</p><progress value="${read}" max="${ids.length}" aria-label="${esc(category)} 읽은 개념"></progress><button class="secondary" data-part="${esc(category)}">파트 공부하기 →</button></article>`;
@@ -41,7 +65,7 @@ function home(){
 let selectedPart=BUNDLES[0].category;
 function part(){
  const bundles=BUNDLES.filter(b=>b.category===selectedPart);
- return `<section class="wide-section"><button class="text-button" data-nav="home">← 전체 파트</button><span class="eyebrow">개념 읽기 → 묶음 퀴즈</span><h1>${esc(selectedPart)}</h1><p class="lead">순서대로 시작해도, 필요한 묶음부터 골라도 좋아요.</p><div class="lesson-list">${bundles.map((b,i)=>`<article class="panel"><span class="eyebrow">묶음 ${i+1} · ${b.questionIds.length}개 개념</span><h2>${esc(b.title)}</h2><p>${b.questionIds.map(id=>esc(NOTES[id].title)).join(' · ')}</p><p class="lesson-status">읽음 ${b.questionIds.filter(isRead).length}/${b.questionIds.length} · ${completed(b)?'퀴즈 완료':'퀴즈 미완료'}</p><div class="study-actions"><button class="primary" data-lesson="${b.id}">개념 보기</button><button class="secondary" data-bundle-quiz="${b.id}">묶음 퀴즈</button></div></article>`).join('')}</div></section>`;
+ return `<section class="wide-section"><button class="text-button" data-nav="home">← 전체 파트</button><span class="eyebrow">개념 읽기 → 묶음 퀴즈</span><h1>${esc(selectedPart)}</h1><p class="lead">순서대로 시작해도, 필요한 묶음부터 골라도 좋아요.</p>${selectedPart==='SQL 개념'?'<div class="study-actions"><button class="primary" data-action="start-sql">SQL 영문 명령어 직접 쓰기 →</button></div>':''}<div class="lesson-list">${bundles.map((b,i)=>`<article class="panel"><span class="eyebrow">묶음 ${i+1} · ${b.questionIds.length}개 개념</span><h2>${esc(b.title)}</h2><p>${b.questionIds.map(id=>esc(NOTES[id].title)).join(' · ')}</p><p class="lesson-status">읽음 ${b.questionIds.filter(isRead).length}/${b.questionIds.length} · ${completed(b)?'퀴즈 완료':'퀴즈 미완료'}</p><div class="study-actions"><button class="primary" data-lesson="${b.id}">개념 보기</button><button class="secondary" data-bundle-quiz="${b.id}">묶음 퀴즈</button></div></article>`).join('')}</div></section>`;
 }
 function saveCursor(){
  const b=lesson();if(!b||blocked)return;
@@ -62,16 +86,33 @@ function concept(){
  <div class="concept-links" aria-label="묶음의 개념">${b.questionIds.map((id,i)=>`<button class="text-button" data-concept-index="${i}" ${i===conceptIndex?'aria-current="step"':''}>${isRead(id)?'✓ ':''}${esc(NOTES[id].title)}</button>`).join('')}</div></section>`;
 }
 function bundleResultActions(s){
+ if(s.bundle?.id===SQL_BUNDLE_ID)return '<button class="primary" data-action="start-sql">SQL 영문 다시 연습</button><button class="secondary" data-nav="history">풀이 기록</button>';
  if(s.mode!=='bundle')return '<button class="secondary" data-action="start">새로운 30문제</button>';
  const b=BUNDLES.find(b=>b.id===s.bundle.id);if(!b)return '';
  const same=BUNDLES.filter(x=>x.category===b.category),next=same[same.indexOf(b)+1];
  return `<button class="secondary" data-lesson="${b.id}">개념 다시 보기</button><button class="secondary" data-bundle-quiz="${b.id}">같은 묶음 다시 풀기</button>${next?`<button class="primary" data-lesson="${next.id}">다음 묶음 →</button>`:'<button class="secondary" data-nav="home">다른 파트 공부하기</button>'}`;
 }
+function sqlQuiz(s,a,q){
+ const i=s.index,done=s.items.length-C.counts(s).ungraded;
+ const feedback=a.rating==='correct'?'한 번에 맞혔어요.':a.rating==='partial'?'다시 써서 맞혔어요. 다음 연습에도 나옵니다.':'두 번 틀렸어요. 다음 연습에서 다시 써 보세요.';
+ return `<section class="quiz-shell sql-drill-shell"><div class="section-heading"><div><span class="eyebrow">SQL 영문 쓰기 · ${fmt(s.startedAt)}</span><h1>뜻을 보고, 영어로.</h1></div><button class="text-button" data-nav="home">잠시 쉬기</button></div>
+ <div class="progress-meta"><strong>명령어 ${i+1} / ${s.items.length}</strong><span>${done}개 확인 완료</span></div><progress value="${done}" max="${s.items.length}" aria-label="확인 완료한 명령어 수"></progress>
+ <article class="question-card sql-drill-card"><div class="card-top"><span class="category-label">SQL 영문 쓰기</span></div><h2 id="question-title">${esc(q.prompt)}</h2>
+ <label class="answer-label" for="answer">영문 명령어 <small>대소문자는 구분하지 않고 철자와 띄어쓰기를 확인해요.</small></label>
+ <input id="answer" class="sql-answer" type="text" inputmode="text" maxlength="40" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="영어로 직접 입력하세요" value="${esc(a.draft)}" ${a.revealed?'readonly':''}>
+ <div class="input-foot"><span id="save-state">${notice?'저장 상태를 확인해 주세요.':'이 브라우저에 자동 저장'}</span><span id="char-count">${a.draft.length} / 40자</span></div>
+ ${a.spellingAttempts&&!a.revealed?`<p class="sql-hint" role="status">아직 달라요. 첫 글자 <strong>${esc(q.answer[0])}</strong>를 보고 한 번 더 써 보세요.</p>`:''}
+ ${a.revealed?`<section class="answer-panel"><span class="eyebrow">철자 확인</span><p class="sql-feedback ${a.rating}">${feedback}</p><p class="sql-correct-answer">${esc(q.answer)}</p><p class="explanation">${esc(q.explanation)}</p></section>`:`<div class="reveal-row"><p>먼저 직접 입력해 보세요. 두 번 틀리면 정답을 보여 줍니다.</p><button class="primary" data-action="reveal" ${blocked?'disabled':''}>철자 확인</button></div>`}
+ ${sources(q)}</article>
+ <div class="quiz-controls"><button class="secondary" data-action="prev" ${i===0?'disabled':''}>이전 명령어</button><span>${a.rating?`결과: ${labels[a.rating]}`:'철자를 입력하고 확인해 주세요.'}</span><button class="primary" data-action="next" ${!a.rating||blocked?'disabled':''}>다음 명령어 →</button></div>
+ <div class="question-dots" aria-label="명령어 이동">${s.items.map((x,j)=>`<button data-index="${j}" class="${x.rating||''} ${i===j?'current':''}" aria-label="${j+1}번 명령어, ${labels[x.rating||'ungraded']}" ${i===j?'aria-current="step"':''}>${j+1}</button>`).join('')}</div></section>`;
+}
 function quiz(){
   const s=active();if(!s){page='home';return home();}const i=s.index,a=s.items[i],q=a.question,c=C.counts(s),done=s.items.length-c.ungraded;
+  if(isSqlSpelling(q))return sqlQuiz(s,a,q);
   return `<section class="quiz-shell"><div class="section-heading"><div><span class="eyebrow">${fmt(s.startedAt)} · ${esc(sessionLabel(s))}</span><h1>한 장씩, 내 답으로.</h1></div><button class="text-button" data-nav="home">잠시 쉬기</button></div><div class="progress-meta"><strong>문제 ${String(i+1).padStart(2,'0')} <span>/ ${s.items.length}</span></strong><span>${done}개 평가 완료</span></div><progress value="${done}" max="${s.items.length}" aria-label="평가 완료한 문제 수"></progress><article class="question-card"><div class="card-top"><span class="category-label">${esc(q.category)}</span><div>${badges(q)}</div></div><h2 id="question-title">${esc(q.prompt)}</h2><label class="answer-label" for="answer">내 답안 <small>핵심 단어부터 차근차근 써 보세요.</small></label><textarea id="answer" maxlength="20000" rows="5" placeholder="여기에 답을 작성하세요." ${a.revealed?'readonly':''}>${esc(a.draft)}</textarea><div class="input-foot"><span id="save-state">${notice?'저장 상태를 확인해 주세요.':'이 브라우저에 자동 저장'}</span><span id="char-count">${a.draft.length.toLocaleString()} / 20,000자</span></div>${a.revealed?`<section class="answer-panel"><span class="eyebrow">모범답안</span><p>${esc(q.answer)}</p><div class="keywords">${q.keywords.map(k=>`<span>${esc(k)}</span>`).join('')}</div><p class="explanation">${esc(q.explanation)}</p></section><div class="self-rating"><h3>내 답을 평가해 보세요.</h3><p>핵심 의미를 담았다면 표현이 달라도 괜찮아요.</p><div class="rating-buttons">${C.RATINGS.map(k=>`<button class="rating ${k} ${a.rating===k?'selected':''}" aria-pressed="${a.rating===k}" data-rating="${k}" ${blocked?'disabled':''}>${k==='correct'?'✓':k==='partial'?'△':'×'} ${labels[k]}</button>`).join('')}</div></div>`:`<div class="reveal-row"><p>빈 답안으로 확인해도 괜찮아요.</p><button class="primary" data-action="reveal" ${blocked?'disabled':''}>정답 확인</button></div>`}${s.mode==='bundle'&&BUNDLES.some(b=>b.id===s.bundle.id)?'<button class="text-button" data-action="quiz-concept">이 문제 개념 다시 보기</button>':''}${sources(q)}</article><div class="quiz-controls"><button class="secondary" data-action="prev" ${i===0?'disabled':''}>이전 문제</button><span>${a.rating?`내 평가: ${labels[a.rating]}`:'정답을 확인하고 평가해 주세요.'}</span><button class="primary" data-action="next" ${!a.rating||blocked?'disabled':''}>${i===s.items.length-1?'미평가 문제로':'다음 문제 →'}</button></div><div class="question-dots" aria-label="문제 이동">${s.items.map((x,j)=>`<button data-index="${j}" class="${x.rating||''} ${i===j?'current':''}" aria-label="${j+1}번 문제, ${labels[x.rating||'ungraded']}" ${i===j?'aria-current="step"':''}>${j+1}</button>`).join('')}</div></section>`;
 }
-function result(){const s=state.sessions.find(s=>s.id===recordId);if(!s){page='history';return history();}return `<section class="wide-section"><div class="result-heading"><span class="eyebrow">${s.items.length}장의 기록이 쌓였어요</span><h1>오늘의 개념 학습 완료.</h1><p>${fmt(s.startedAt)} · 실제 시험 점수가 아닌 자기평가 결과입니다.</p></div>${stats(s)}<div class="result-actions"><button class="primary" data-action="review-result">이번 회차 복습</button>${bundleResultActions(s)}</div><div class="result-preview">${s.items.filter(a=>a.rating!=='correct').slice(0,5).map(a=>`<p><span class="result-label ${a.rating}">${labels[a.rating]}</span>${esc(a.question.prompt)}</p>`).join('')||'<p>모든 문제를 정답으로 평가했어요. 시간이 지난 뒤 다시 떠올려 보세요.</p>'}</div></section>`;}
+function result(){const s=state.sessions.find(s=>s.id===recordId);if(!s){page='history';return history();}return `<section class="wide-section"><div class="result-heading"><span class="eyebrow">${s.items.length}장의 기록이 쌓였어요</span><h1>${s.bundle?.id===SQL_BUNDLE_ID?'SQL 영문 쓰기 완료.':'오늘의 개념 학습 완료.'}</h1><p>${fmt(s.startedAt)} · ${s.bundle?.id===SQL_BUNDLE_ID?'철자와 띄어쓰기를 확인한 연습 결과입니다. 틀리거나 두 번째에 맞힌 명령어는 다음 연습에서 우선 나와요.':'실제 시험 점수가 아닌 자기평가 결과입니다.'}</p></div>${stats(s)}<div class="result-actions"><button class="primary" data-action="review-result">이번 회차 복습</button>${bundleResultActions(s)}</div><div class="result-preview">${s.items.filter(a=>a.rating!=='correct').slice(0,5).map(a=>`<p><span class="result-label ${a.rating}">${labels[a.rating]}</span>${esc(a.question.prompt)}</p>`).join('')||'<p>모든 문제를 정답으로 평가했어요. 시간이 지난 뒤 다시 떠올려 보세요.</p>'}</div></section>`;}
 function history(){
   const sorted=[...state.sessions].sort((a,b)=>Date.parse(b.startedAt)-Date.parse(a.startedAt));
   const selected=recordId==='all'?sorted:sorted.filter(s=>s.id===recordId);
@@ -91,9 +132,32 @@ function start(bundleId=null){
   const bundle=bundleId?BUNDLES.find(b=>b.id===bundleId):null;if(bundleId&&!bundle)return;
   const s=bundle?C.createBundleSession(BANK,bundle,id):C.createSession(BANK,id);state.sessions.unshift(s);state.activeSessionId=s.id;persist();go('quiz');
 }
+function startSqlDrill(){
+ if(blocked){toast('백업 · 복원에서 기록을 복구해 주세요.');return;}
+ if(active()&&!confirm('진행 중인 회차는 풀이 기록에 남겨두고 새 연습을 시작할까요?'))return;
+ const latest=new Map();
+ [...state.sessions].sort((a,b)=>Date.parse(b.updatedAt)-Date.parse(a.updatedAt)).forEach(s=>{
+   if(s.bundle?.id!==SQL_BUNDLE_ID)return;
+   s.items.forEach(a=>{if(a.rating&&!latest.has(a.question.id))latest.set(a.question.id,a.rating);});
+ });
+ const missed=SQL_SPELLING.filter(q=>['wrong','partial'].includes(latest.get(q.id)));
+ const chosen=missed.length?C.sample(missed,Math.min(5,missed.length)):[];
+ const pool=SQL_SPELLING.filter(q=>!chosen.some(x=>x.id===q.id));
+ if(chosen.length<5)chosen.push(...C.sample(pool,5-chosen.length));
+ const bundle={id:SQL_BUNDLE_ID,version:1,category:'SQL 영문 쓰기',title:'명령어 철자 연습',questionIds:chosen.map(q=>q.id)};
+ const id=crypto.randomUUID?crypto.randomUUID():`s-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+ const s=C.createBundleSession(SQL_SPELLING,bundle,id);
+ s.items.forEach(a=>a.spellingAttempts=0);
+ state.sessions.unshift(s);state.activeSessionId=s.id;persist();go('quiz');
+}
 function download(data,name){const blob=new Blob([typeof data==='string'?data:JSON.stringify(data,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 function exportData(){download({...state,exportedAt:new Date().toISOString()},`개념한장_백업_${new Date().toISOString().slice(0,10)}.json`);toast('백업 파일을 내려받았습니다.');}
-app.addEventListener('input',e=>{if(e.target.id==='answer'){const s=active();if(!s||s.items[s.index].revealed||blocked)return;s.items[s.index].draft=e.target.value;stamp(s);const ok=persist();document.getElementById('char-count').textContent=`${e.target.value.length.toLocaleString()} / 20,000자`;const status=document.getElementById('save-state');if(status){status.textContent=ok?'자동 저장됨':'저장 실패 · 지금 백업해 주세요';status.classList.toggle('save-error',!ok);}if(!ok&&!document.querySelector('.storage-warning'))render();}});
+app.addEventListener('input',e=>{if(e.target.id==='answer'){const s=active();if(!s||s.items[s.index].revealed||blocked)return;s.items[s.index].draft=e.target.value;stamp(s);const ok=persist();document.getElementById('char-count').textContent=`${e.target.value.length.toLocaleString()} / ${isSqlSpelling(s.items[s.index].question)?'40':'20,000'}자`;const status=document.getElementById('save-state');if(status){status.textContent=ok?'자동 저장됨':'저장 실패 · 지금 백업해 주세요';status.classList.toggle('save-error',!ok);}if(!ok&&!document.querySelector('.storage-warning'))render();}});
+app.addEventListener('keydown',e=>{
+ if(e.target.id==='answer'&&e.key==='Enter'&&isSqlSpelling(active()?.items[active().index]?.question)){
+   e.preventDefault();app.querySelector('[data-action="reveal"]')?.click();
+ }
+});
 document.addEventListener('click',e=>{
   const b=e.target.closest('button,a.brand');if(!b||b.disabled)return;
   if(b.matches('a.brand')){e.preventDefault();go('home');return;}
@@ -114,7 +178,7 @@ document.addEventListener('click',e=>{
     case 'concept-next':if(lesson()&&conceptIndex<lesson().questionIds.length-1){conceptIndex++;saveCursor();go('concept');}break;
     case 'back-quiz':returnToQuiz=false;go('quiz');break;
     case 'quiz-concept':if(s?.mode==='bundle'){const b=BUNDLES.find(b=>b.id===s.bundle.id);if(b)openLesson(b.id,b.questionIds.indexOf(s.items[s.index].question.id),true);}break;
-    case 'start':start();break;case 'resume':go('quiz');break;case 'export':exportData();break;
+    case 'start':start();break;case 'start-sql':startSqlDrill();break;case 'resume':go('quiz');break;case 'export':exportData();break;
     case 'install-app':{
       if(installPrompt){const prompt=installPrompt;installPrompt=null;prompt.prompt();Promise.resolve(prompt.userChoice).then(choice=>{if(choice?.outcome==='dismissed')toast('Chrome 메뉴에서도 앱을 설치할 수 있어요.');}).catch(()=>{});}
       else if(/iPhone|iPad|iPod/.test(navigator.userAgent))toast('Safari 공유 버튼에서 홈 화면에 추가를 선택하세요.');
@@ -123,7 +187,20 @@ document.addEventListener('click',e=>{
     }
     case 'export-raw':try{download(localStorage.getItem(C.KEY)||'{}','개념한장_복구용원본.json');}catch{toast('원본을 읽지 못했습니다.');}break;
     case 'reload':location.reload();break;
-    case 'reveal':if(s&&!blocked){s.items[s.index].revealed=true;stamp(s);persist();render();document.querySelector('.answer-panel')?.scrollIntoView({block:'nearest',behavior:'smooth'});}break;
+    case 'reveal':if(s&&!blocked){
+      const a=s.items[s.index],q=a.question;
+      if(isSqlSpelling(q)){
+        const typed=a.draft.trim().replace(/;$/,'').trim().replace(/\s+/g,' ').toUpperCase();
+        if(!typed){toast('명령어를 영어로 입력해 주세요.');break;}
+        if(a.spellingAttempts&&typed===a.lastSpellingAttempt){toast('다른 철자로 다시 입력해 보세요.');break;}
+        if(typed===q.answer||a.spellingAttempts>=1){
+          a.revealed=true;
+          C.grade(s,s.index,typed===q.answer?(a.spellingAttempts?'partial':'correct'):'wrong');
+          if(s.status==='completed'){state.activeSessionId=null;recordId=s.id;persist();go('result');}
+          else{persist();render();document.querySelector('.answer-panel')?.scrollIntoView({block:'nearest',behavior:'smooth'});}
+        }else{a.spellingAttempts=1;a.lastSpellingAttempt=typed;stamp(s);persist();render();document.getElementById('answer')?.select();}
+      }else{a.revealed=true;stamp(s);persist();render();document.querySelector('.answer-panel')?.scrollIntoView({block:'nearest',behavior:'smooth'});}
+    }break;
     case 'prev':if(s&&s.index>0){s.index--;stamp(s);persist();render();}break;
     case 'next':if(s&&s.items[s.index].rating){s.index=s.index<s.items.length-1?s.index+1:s.items.findIndex(a=>!a.rating);stamp(s);persist();render();window.scrollTo({top:0,behavior:'smooth'});}break;
     case 'review-result':filter='all';go('history');break;
