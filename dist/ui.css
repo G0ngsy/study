@@ -35,3 +35,9 @@ textarea:focus{border-color:#719b78}.badge{background:#f3edcc;color:#795f22}
 .sql-code{margin:0 0 22px;padding:18px;background:#f1f4eb;border:1px solid #d9dfd2;border-radius:12px;color:#263c32;font:0.875rem/1.65 ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre;overflow-x:auto}
 .sql-code-question h2{margin-bottom:16px}
 @media(max-width:560px){.sql-code{font-size:.75rem;padding:14px}}
+
+.english-term{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;color:#32634d;line-height:1.55;overflow-wrap:anywhere}
+.english-term span{font-size:.75rem;font-weight:700;letter-spacing:.02em;color:var(--muted)}
+.english-term strong{font-size:.9375rem;font-weight:600;overflow-wrap:anywhere}
+.concept-card .english-term{margin:-4px 0 18px}
+.answer-panel .english-term,.record-body .english-term{margin:8px 0 16px}
