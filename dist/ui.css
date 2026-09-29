@@ -41,3 +41,11 @@ textarea:focus{border-color:#719b78}.badge{background:#f3edcc;color:#795f22}
 .english-term strong{font-size:.9375rem;font-weight:600;overflow-wrap:anywhere}
 .concept-card .english-term{margin:-4px 0 18px}
 .answer-panel .english-term,.record-body .english-term{margin:8px 0 16px}
+
+/* Exam word banks and authored UML illustration; wrap on narrow screens. */
+.exam-choices{margin:1.25rem 0;padding:1rem 1.2rem;border:1px solid var(--line,#cdd6c4);border-radius:10px}
+.exam-choices ul{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,10rem),1fr));gap:.65rem 1rem;margin:.75rem 0 0;padding-left:1.2rem}
+.exam-choices li{overflow-wrap:anywhere}
+.exam-diagram{margin:1.25rem 0;padding:1rem;border:1px solid var(--line,#cdd6c4);border-radius:10px}
+.exam-diagram svg{display:block;width:100%;height:auto;max-width:620px;margin:auto}
+.exam-diagram figcaption{margin-top:.75rem;font-size:.85rem;color:var(--muted,#596956)}

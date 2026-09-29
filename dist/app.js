@@ -131,7 +131,314 @@ function conceptVariant(original,variant,quizType){
  return {...variant,id:original.id,version:original.version+1,category:original.category,
    badges:variant.badges,quizType,conceptId:original.id};
 }
+
+// Original practice variants authored from the supplied exam-format examples.
+// Each variant stays within one existing lesson concept.
+const EXAM_VARIANTS=[
+  {
+    "id": "exam-sw-agile",
+    "conceptId": "sw-agile",
+    "quizType": "term",
+    "prompt": "다음 설명에 해당하는 소프트웨어 개발 방법론을 쓰시오.\n• 짧은 주기로 동작하는 소프트웨어를 제공한다.\n• 각 주기의 결과와 고객의 피드백을 다음 개발에 반영한다.\n• 요구사항의 변화에 맞춰 계획을 조정한다.",
+    "answer": "애자일(Agile)",
+    "keywords": [
+      "애자일"
+    ],
+    "version": 1
+  },
+  {
+    "id": "exam-sw-requirement",
+    "conceptId": "sw-requirement",
+    "quizType": "multi-term",
+    "prompt": "다음 설명의 괄호에 들어갈 요구사항 유형을 쓰시오.\n① 주문 등록, 결제 처리 등 시스템이 제공해야 할 동작을 정하는 것은 ( ① ) 요구사항이다.\n② 응답 시간, 보안 수준, 사용 편의성 등 시스템의 품질과 제약을 정하는 것은 ( ② ) 요구사항이다.",
+    "answer": "① 기능(Functional)\n② 비기능(Non-functional)",
+    "keywords": [
+      "기능",
+      "비기능"
+    ],
+    "version": 1
+  },
+  {
+    "id": "exam-sw-class",
+    "conceptId": "sw-class",
+    "quizType": "term",
+    "prompt": "다음 설명의 괄호에 공통으로 들어갈 UML 용어를 쓰시오.\n(    )는 공통된 속성과 연산을 가진 객체들의 집합을 정의한다. (    ) 다이어그램은 이들의 속성·연산과 상속·연관 등의 관계를 표현한다.",
+    "answer": "클래스(Class)",
+    "keywords": [
+      "클래스"
+    ],
+    "version": 1
+  },
+  {
+    "id": "exam-test-alpha-beta",
+    "conceptId": "test-alpha-beta",
+    "quizType": "multi-term",
+    "prompt": "다음 인수 테스트의 명칭을 각각 쓰시오.\n① 개발자가 준비한 통제된 환경에서 사용자가 기능을 시험하고 개발자와 함께 문제를 확인한다.\n② 사용자가 실제 업무 환경에서 제품을 사용한 뒤 발견한 문제와 의견을 개발자에게 전달한다.",
+    "answer": "① 알파 테스트(Alpha Test)\n② 베타 테스트(Beta Test)",
+    "keywords": [
+      "알파 테스트",
+      "베타 테스트"
+    ],
+    "version": 1
+  },
+  {
+    "id": "exam-test-stub-driver",
+    "conceptId": "test-stub-driver",
+    "quizType": "multi-term",
+    "prompt": "통합 테스트에 필요한 대체 모듈의 명칭을 쓰시오.\n① 상위 모듈을 먼저 시험할 때, 아직 준비되지 않은 하위 모듈의 응답을 대신 제공하는 모듈이다.\n② 하위 모듈을 먼저 시험할 때, 입력값을 전달하고 시험 대상 모듈을 호출하는 모듈이다.",
+    "answer": "① 스텁(Stub)\n② 드라이버(Driver, Test Driver)",
+    "keywords": [
+      "스텁",
+      "드라이버"
+    ],
+    "version": 1
+  },
+  {
+    "id": "exam-test-regression",
+    "conceptId": "test-regression",
+    "quizType": "term",
+    "prompt": "다음 설명에 해당하는 테스트를 보기에서 찾아 영문으로 쓰시오.\n결제 기능을 수정한 뒤, 기존에 통과했던 주문·취소 테스트를 다시 수행하여 변경으로 인한 결함이 발생했는지 확인한다.",
+    "answer": "Regression",
+    "keywords": [
+      "Regression"
+    ],
+    "choices": [
+      "Unit",
+      "Acceptance",
+      "Regression",
+      "Integration",
+      "System"
+    ],
+    "version": 1
+  },
+  {
+    "id": "exam-test-oracle",
+    "conceptId": "test-oracle",
+    "quizType": "term",
+    "prompt": "다음 설명에 해당하는 테스트 오라클의 명칭을 쓰시오.\n모든 입력에 대한 예상 결과를 구하기 어려워 대표 입력 몇 개를 선정하고, 그 입력들의 정확한 예상 결과만 준비하여 실제 결과와 비교한다.",
+    "answer": "샘플링 오라클(Sampling Oracle)",
+    "keywords": [
+      "샘플링 오라클"
+    ],
+    "version": 1
+  },
+  {
+    "id": "exam-test-static",
+    "conceptId": "test-static",
+    "quizType": "multi-term",
+    "prompt": "다음 설명에 해당하는 테스트 유형을 각각 쓰시오.\n① 프로그램을 실행하지 않고 요구 명세와 소스 코드의 결함을 검토한다.\n② 프로그램에 입력값을 주고 실행하여 실제 결과를 확인한다.",
+    "answer": "① 정적 테스트(Static Testing)\n② 동적 테스트(Dynamic Testing)",
+    "keywords": [
+      "정적 테스트",
+      "동적 테스트"
+    ],
+    "version": 1
+  },
+  {
+    "id": "exam-test-white-black",
+    "conceptId": "test-white-black",
+    "quizType": "multi-term",
+    "prompt": "다음 테스트 설계 방식의 명칭을 각각 쓰시오.\n① 코드의 분기와 반복 구조를 분석하여 실행 경로를 시험한다.\n② 내부 코드를 분석하지 않고 요구 명세에 정의된 입력과 출력으로 기능을 시험한다.",
+    "answer": "① 화이트박스 테스트(White-box Testing)\n② 블랙박스 테스트(Black-box Testing)",
+    "keywords": [
+      "화이트박스",
+      "블랙박스"
+    ],
+    "version": 1
+  },
+  {
+    "id": "exam-test-levels",
+    "conceptId": "test-levels",
+    "quizType": "multi-term",
+    "prompt": "각 설명에 해당하는 테스트 수준을 보기에서 찾아 쓰시오.\n① 개별 함수나 모듈을 대상으로 시험한다.\n② 모듈을 연결한 뒤 인터페이스와 데이터 전달을 시험한다.\n③ 완성된 전체 시스템이 요구사항을 충족하는지 시험한다.\n④ 사용자의 업무 요구를 충족하여 인도할 수 있는지 확인한다.",
+    "answer": "① Unit\n② Integration\n③ System\n④ Acceptance",
+    "keywords": [
+      "Unit",
+      "Integration",
+      "System",
+      "Acceptance"
+    ],
+    "choices": [
+      "System",
+      "Acceptance",
+      "Integration",
+      "Unit"
+    ],
+    "version": 1
+  },
+  {
+    "id": "exam-test-coverage",
+    "conceptId": "test-coverage",
+    "quizType": "multi-term",
+    "prompt": "다음 설명에 해당하는 커버리지 명칭을 쓰시오.\n① 소스 코드의 모든 실행문을 적어도 한 번 수행한다.\n② 각 판단문에서 참 분기와 거짓 분기를 모두 적어도 한 번 수행한다.",
+    "answer": "① 구문 커버리지(Statement Coverage)\n② 결정 커버리지(Decision Coverage)",
+    "keywords": [
+      "구문 커버리지",
+      "결정 커버리지"
+    ],
+    "version": 1
+  },
+  {
+    "id": "exam-sec-watering",
+    "conceptId": "sec-watering",
+    "quizType": "term",
+    "prompt": "다음 공격을 보기에서 찾아 영문으로 쓰시오.\n공격자가 특정 연구소 직원들이 자주 방문하는 전문 커뮤니티를 먼저 침해하였다. 직원이 그 사이트에 접속하면 악성 코드에 감염되도록 하여 연구소 내부로 침투하려 한다.",
+    "answer": "Watering Hole",
+    "keywords": [
+      "Watering Hole"
+    ],
+    "choices": [
+      "Phishing",
+      "Ransomware",
+      "Watering Hole",
+      "Sniffing",
+      "Pharming"
+    ],
+    "version": 1
+  },
+  {
+    "id": "exam-sec-ids-ips",
+    "conceptId": "sec-ids-ips",
+    "quizType": "multi-term",
+    "prompt": "다음 보안 시스템의 명칭을 영문 약어로 쓰시오.\n① 네트워크의 침입 징후를 탐지하여 관리자에게 경고한다.\n② 침입을 탐지하고 해당 공격 트래픽을 실시간으로 차단한다.",
+    "answer": "① IDS(Intrusion Detection System)\n② IPS(Intrusion Prevention System)",
+    "keywords": [
+      "IDS",
+      "IPS"
+    ],
+    "version": 1
+  },
+  {
+    "id": "exam-sec-cia",
+    "conceptId": "sec-cia",
+    "quizType": "multi-term",
+    "prompt": "정보보호의 기본 목표에 해당하는 용어를 쓰시오.\n① 허가받지 않은 사용자가 정보를 열람하지 못하게 한다.\n② 정보가 권한 없이 변경되거나 훼손되지 않게 한다.\n③ 허가받은 사용자가 필요할 때 서비스를 이용할 수 있게 한다.",
+    "answer": "① 기밀성(Confidentiality)\n② 무결성(Integrity)\n③ 가용성(Availability)",
+    "keywords": [
+      "기밀성",
+      "무결성",
+      "가용성"
+    ],
+    "version": 1
+  },
+  {
+    "id": "exam-sec-symmetric",
+    "conceptId": "sec-symmetric",
+    "quizType": "multi-term",
+    "prompt": "다음 암호 방식의 명칭을 쓰시오.\n① 암호화와 복호화에 동일한 비밀키를 사용한다.\n② 서로 수학적으로 연결된 공개키와 개인키의 쌍을 사용한다.",
+    "answer": "① 대칭키 암호(Symmetric-key Cryptography)\n② 비대칭키 암호(Asymmetric-key Cryptography)",
+    "keywords": [
+      "대칭키",
+      "비대칭키"
+    ],
+    "version": 1
+  },
+  {
+    "id": "exam-sec-xss-csrf",
+    "conceptId": "sec-xss-csrf",
+    "quizType": "multi-term",
+    "prompt": "다음 공격의 명칭을 영문 약어로 쓰시오.\n① 게시글에 삽입한 악성 스크립트가 열람자의 브라우저에서 실행되도록 한다.\n② 로그인 상태인 사용자의 브라우저가 사용자의 의도와 다른 요청을 사이트로 전송하게 한다.",
+    "answer": "① XSS(Cross-Site Scripting)\n② CSRF(Cross-Site Request Forgery)",
+    "keywords": [
+      "XSS",
+      "CSRF"
+    ],
+    "version": 1
+  },
+  {
+    "id": "exam-net-rip-ospf",
+    "conceptId": "net-rip-ospf",
+    "quizType": "multi-term",
+    "prompt": "다음 라우팅 프로토콜을 보기에서 찾아 쓰시오.\n① 거리 벡터 방식이며 목적지까지의 홉 수를 경로 선택에 사용한다.\n② 링크 상태를 공유하고 다익스트라 알고리즘으로 최단 경로를 계산한다.",
+    "answer": "① RIP\n② OSPF",
+    "keywords": [
+      "RIP",
+      "OSPF"
+    ],
+    "choices": [
+      "BGP",
+      "OSPF",
+      "ARP",
+      "RIP",
+      "DHCP"
+    ],
+    "version": 1
+  },
+  {
+    "id": "exam-net-bgp",
+    "conceptId": "net-bgp",
+    "quizType": "term",
+    "prompt": "다음 설명에 해당하는 라우팅 프로토콜을 영문 약어로 쓰시오.\n서로 다른 자율 시스템 사이에서 경로 정보를 교환하며, AS 경로와 정책을 고려하여 경로를 선택한다.",
+    "answer": "BGP(Border Gateway Protocol)",
+    "keywords": [
+      "BGP"
+    ],
+    "version": 1
+  },
+  {
+    "id": "exam-net-tcp-udp",
+    "conceptId": "net-tcp-udp",
+    "quizType": "multi-term",
+    "prompt": "각 설명에 해당하는 전송 계층 프로토콜의 영문 약어를 쓰시오.\n① 연결을 설정하고 순서 제어와 재전송을 이용하여 신뢰성 있는 전달을 제공한다.\n② 연결 설정 없이 데이터그램을 전달하며 전송 순서와 재전송을 기본적으로 보장하지 않는다.",
+    "answer": "① TCP(Transmission Control Protocol)\n② UDP(User Datagram Protocol)",
+    "keywords": [
+      "TCP",
+      "UDP"
+    ],
+    "version": 1
+  },
+  {
+    "id": "exam-net-protocol",
+    "conceptId": "net-protocol",
+    "quizType": "multi-term",
+    "prompt": "프로토콜의 기본 요소에 해당하는 용어를 쓰시오.\n① 데이터 형식과 부호화 방법을 정한다.\n② 제어 정보가 뜻하는 내용과 오류 처리 방법을 정한다.\n③ 전송 속도와 송수신 시점을 조정한다.",
+    "answer": "① 구문(Syntax)\n② 의미(Semantics)\n③ 타이밍(Timing)",
+    "keywords": [
+      "구문",
+      "의미",
+      "타이밍"
+    ],
+    "version": 1
+  },
+  {
+    "id": "exam-it-cloud",
+    "conceptId": "it-cloud",
+    "quizType": "multi-term",
+    "prompt": "다음 클라우드 서비스 유형을 영문 약어로 쓰시오.\n① 가상 서버·스토리지·네트워크 자원을 제공한다.\n② 애플리케이션 개발과 실행에 필요한 플랫폼을 제공한다.\n③ 사용자가 곧바로 이용할 수 있는 완성된 소프트웨어를 제공한다.",
+    "answer": "① IaaS\n② PaaS\n③ SaaS",
+    "keywords": [
+      "IaaS",
+      "PaaS",
+      "SaaS"
+    ],
+    "version": 1
+  },
+  {
+    "id": "exam-sw-class-diagram",
+    "conceptId": "sw-class",
+    "quizType": "term",
+    "version": 1,
+    "prompt": "다음 그림에 해당하는 UML 다이어그램의 명칭을 쓰시오.",
+    "diagram": "class",
+    "answer": "클래스 다이어그램(Class Diagram)",
+    "keywords": [
+      "클래스 다이어그램"
+    ]
+  }
+].map(v=>{
+ const original=BANK.find(q=>q.id===v.conceptId);
+ return {...v,category:original.category,sourceIds:[original.id],sources:original.sources,
+   explanation:original.answer,badges:[],examVariantId:v.id};
+});
+const EXAM_BY_CONCEPT=new Map();
+for(const q of EXAM_VARIANTS){
+ if(!EXAM_BY_CONCEPT.has(q.conceptId))EXAM_BY_CONCEPT.set(q.conceptId,[]);
+ EXAM_BY_CONCEPT.get(q.conceptId).push(q);
+}
+
 function questionForConcept(original,allowedIds=null){
+ const exam=EXAM_BY_CONCEPT.get(original.id);
+ if(exam?.length){const selected=C.sample(exam,1)[0];return {...conceptVariant(original,selected,selected.quizType),version:original.version+2};}
  const id=original.id,multi=MULTI_BY_CONCEPT.get(id);
  if(multi&&(!allowedIds||multi.sourceIds.every(source=>allowedIds.includes(source))))
    return conceptVariant(original,multi,'multi-term');
@@ -147,6 +454,15 @@ function questionForConcept(original,allowedIds=null){
 
 
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function examMaterials(q){
+ const choices=Array.isArray(q.choices)&&q.choices.length<=20
+   ? '<aside class="exam-choices" aria-label="보기"><strong>보기</strong><ul>'+q.choices.map(x=>'<li lang="en">'+esc(x)+'</li>').join('')+'</ul></aside>':'';
+ const diagram=q.diagram==='class'
+   ? '<figure class="exam-diagram"><svg viewBox="0 0 520 200" role="img" aria-label="Customer와 Order라는 이름의 두 상자가 연결되어 있다. 각 상자는 이름, 속성, 연산의 세 구획으로 나뉘며 연결선의 양끝에는 1과 0..*가 표시되어 있다." xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="2"><rect x="10" y="25" width="200" height="145"/><path d="M10 70h200M10 118h200M210 95h100"/><rect x="310" y="25" width="200" height="145"/><path d="M310 70h200M310 118h200"/></g><g fill="currentColor" font-family="sans-serif" font-size="16"><text x="68" y="54">Customer</text><text x="22" y="100">- customerId: int</text><text x="22" y="149">+ register(): void</text><text x="384" y="54">Order</text><text x="322" y="100">- orderId: int</text><text x="322" y="149">+ cancel(): void</text><text x="220" y="84">1</text><text x="270" y="84">0..*</text></g></svg><figcaption>그림의 표기와 관계를 보고 답하시오.</figcaption></figure>':'';
+ return diagram+choices;
+}
+
 function englishLine(q){
  const ids=q?.sourceIds?.length?q.sourceIds:[q?.conceptId||q?.id?.replace(/^term-/,'')];
  const terms=[...new Set(ids.map(id=>ENGLISH[id]).filter(Boolean))];
@@ -160,6 +476,7 @@ function refreshActivePromptSnapshots(value){
   if(session.status!=='active')continue;
   for(const item of session.items){
    const q=item.question;
+   if(q.examVariantId)continue;
    let latest=null;
    if(q.quizType==='term'||q.id.startsWith('term-'))
      latest=TERM_BY_CONCEPT.get(q.conceptId||q.id.replace(/^term-/,''));
@@ -266,7 +583,7 @@ function quiz(){
   const s=active();if(!s){page='home';return home();}const i=s.index,a=s.items[i],q=a.question,c=C.counts(s),done=s.items.length-c.ungraded;
   if(isSqlSpelling(q))return sqlQuiz(s,a,q);
   const term=isTermRecall(q);
-  return `<section class="quiz-shell"><div class="section-heading"><div><span class="eyebrow">${fmt(s.startedAt)} · ${esc(sessionLabel(s))}</span><h1>한 장씩, 내 답으로.</h1></div><button class="text-button" data-nav="home">잠시 쉬기</button></div><div class="progress-meta"><strong>문제 ${String(i+1).padStart(2,'0')} <span>/ ${s.items.length}</span></strong><span>${done}개 평가 완료</span></div><progress value="${done}" max="${s.items.length}" aria-label="평가 완료한 문제 수"></progress><article class="question-card ${term?'term-question':isSqlCode(q)?'sql-code-question':''}"><div class="card-top"><span class="category-label">${term?'용어 맞히기 · ':''}${esc(q.category)}</span><div>${badges(q)}</div></div><h2 id="question-title">${esc(q.prompt)}</h2>${isSqlCode(q)?`<pre class="sql-code">${esc(q.code)}</pre>`:''}<label class="answer-label" for="answer">${isSqlCode(q)?'빈칸 답안':term?'용어·명칭':'내 답안'} <small>${isSqlCode(q)?'①·②에 들어갈 영어 키워드를 줄마다 적으세요.':isMultiTerm(q)?'번호별 명칭을 줄마다 적어 보세요.':term?'짧은 명칭을 직접 적어 보세요.':'핵심 단어부터 차근차근 써 보세요.'}</small></label><textarea id="answer" class="${term||isSqlCode(q)?'term-answer':''}" maxlength="${isMultiTerm(q)||isSqlCode(q)?300:term?120:20000}" rows="${isMultiTerm(q)?5:isSqlCode(q)?3:term?2:5}" placeholder="여기에 답을 작성하세요." ${a.revealed?'readonly':''}>${esc(a.draft)}</textarea><div class="input-foot"><span id="save-state">${notice?'저장 상태를 확인해 주세요.':'이 브라우저에 자동 저장'}</span><span id="char-count">${a.draft.length.toLocaleString()} / ${isMultiTerm(q)||isSqlCode(q)?'300':term?'120':'20,000'}자</span></div>${a.revealed?`<section class="answer-panel"><span class="eyebrow">${isSqlCode(q)?'정답 SQL 키워드':term?'정답 용어':'모범답안'}</span><p>${esc(q.answer)}</p>${englishLine(q)}${term?`<details class="concept-more"><summary>설명 다시 보기</summary><p class="explanation">${esc(q.explanation)}</p></details>`:`<div class="keywords">${q.keywords.map(k=>`<span>${esc(k)}</span>`).join('')}</div><p class="explanation">${esc(q.explanation)}</p>`}</section><div class="self-rating"><h3>${term?'명칭을 맞혔나요?':'내 답을 평가해 보세요.'}</h3><p>${isSqlCode(q)?'모든 키워드의 철자와 위치를 맞히면 정답, 일부만 맞히면 부분정답으로 표시하세요.':isMultiTerm(q)?'모든 빈칸을 맞히면 정답, 일부만 맞히면 부분정답으로 표시하세요.':term?'정답과 같은 용어를 썼다면 정답으로 표시하세요. 통용되는 다른 명칭은 해설을 보고 판단하세요.':'핵심 의미를 담았다면 표현이 달라도 괜찮아요.'}</p><div class="rating-buttons">${C.RATINGS.map(k=>`<button class="rating ${k} ${a.rating===k?'selected':''}" aria-pressed="${a.rating===k}" data-rating="${k}" ${blocked?'disabled':''}>${k==='correct'?'✓':k==='partial'?'△':'×'} ${labels[k]}</button>`).join('')}</div></div>`:`<div class="reveal-row"><p>${isSqlCode(q)?'코드의 빈칸을 직접 채운 뒤 확인해 보세요.':term?'명칭을 먼저 떠올려 적어 보세요.':'빈 답안으로 확인해도 괜찮아요.'}</p><button class="primary" data-action="reveal" ${blocked?'disabled':''}>정답 확인</button></div>`}${s.mode==='bundle'&&BUNDLES.some(b=>b.id===s.bundle.id)?'<button class="text-button" data-action="quiz-concept">이 문제 개념 다시 보기</button>':''}${isTermRecall(q)&&s.mode!=='bundle'?`<button class="text-button" data-term-concept="${esc(q.conceptId||q.id.slice(5))}">이 용어 개념 읽기</button>`:''}${sources(q)}</article><div class="quiz-controls"><button class="secondary" data-action="prev" ${i===0?'disabled':''}>이전 문제</button><span>${a.rating?`내 평가: ${labels[a.rating]}`:'정답을 확인하고 평가해 주세요.'}</span><button class="primary" data-action="next" ${!a.rating||blocked?'disabled':''}>${i===s.items.length-1?'미평가 문제로':'다음 문제 →'}</button></div><div class="question-dots" aria-label="문제 이동">${s.items.map((x,j)=>`<button data-index="${j}" class="${x.rating||''} ${i===j?'current':''}" aria-label="${j+1}번 문제, ${labels[x.rating||'ungraded']}" ${i===j?'aria-current="step"':''}>${j+1}</button>`).join('')}</div></section>`;
+  return `<section class="quiz-shell"><div class="section-heading"><div><span class="eyebrow">${fmt(s.startedAt)} · ${esc(sessionLabel(s))}</span><h1>한 장씩, 내 답으로.</h1></div><button class="text-button" data-nav="home">잠시 쉬기</button></div><div class="progress-meta"><strong>문제 ${String(i+1).padStart(2,'0')} <span>/ ${s.items.length}</span></strong><span>${done}개 평가 완료</span></div><progress value="${done}" max="${s.items.length}" aria-label="평가 완료한 문제 수"></progress><article class="question-card ${term?'term-question':isSqlCode(q)?'sql-code-question':''}"><div class="card-top"><span class="category-label">${q.diagram?'그림 판별 · ':q.choices?'보기에서 찾기 · ':isMultiTerm(q)?'빈칸 채우기 · ':term?'용어 맞히기 · ':''}${esc(q.category)}</span><div>${badges(q)}</div></div><h2 id="question-title">${esc(q.prompt)}</h2>${examMaterials(q)}${isSqlCode(q)?`<pre class="sql-code">${esc(q.code)}</pre>`:''}<label class="answer-label" for="answer">${isSqlCode(q)?'빈칸 답안':term?'용어·명칭':'내 답안'} <small>${isSqlCode(q)?'①·②에 들어갈 영어 키워드를 줄마다 적으세요.':isMultiTerm(q)?'번호별 명칭을 줄마다 적어 보세요.':term?'짧은 명칭을 직접 적어 보세요.':'핵심 단어부터 차근차근 써 보세요.'}</small></label><textarea id="answer" class="${term||isSqlCode(q)?'term-answer':''}" maxlength="${isMultiTerm(q)||isSqlCode(q)?300:term?120:20000}" rows="${isMultiTerm(q)?5:isSqlCode(q)?3:term?2:5}" placeholder="여기에 답을 작성하세요." ${a.revealed?'readonly':''}>${esc(a.draft)}</textarea><div class="input-foot"><span id="save-state">${notice?'저장 상태를 확인해 주세요.':'이 브라우저에 자동 저장'}</span><span id="char-count">${a.draft.length.toLocaleString()} / ${isMultiTerm(q)||isSqlCode(q)?'300':term?'120':'20,000'}자</span></div>${a.revealed?`<section class="answer-panel"><span class="eyebrow">${isSqlCode(q)?'정답 SQL 키워드':term?'정답 용어':'모범답안'}</span><p>${esc(q.answer)}</p>${englishLine(q)}${term?`<details class="concept-more"><summary>설명 다시 보기</summary><p class="explanation">${esc(q.explanation)}</p></details>`:`<div class="keywords">${q.keywords.map(k=>`<span>${esc(k)}</span>`).join('')}</div><p class="explanation">${esc(q.explanation)}</p>`}</section><div class="self-rating"><h3>${term?'명칭을 맞혔나요?':'내 답을 평가해 보세요.'}</h3><p>${isSqlCode(q)?'모든 키워드의 철자와 위치를 맞히면 정답, 일부만 맞히면 부분정답으로 표시하세요.':isMultiTerm(q)?'모든 빈칸을 맞히면 정답, 일부만 맞히면 부분정답으로 표시하세요.':term?'정답과 같은 용어를 썼다면 정답으로 표시하세요. 통용되는 다른 명칭은 해설을 보고 판단하세요.':'핵심 의미를 담았다면 표현이 달라도 괜찮아요.'}</p><div class="rating-buttons">${C.RATINGS.map(k=>`<button class="rating ${k} ${a.rating===k?'selected':''}" aria-pressed="${a.rating===k}" data-rating="${k}" ${blocked?'disabled':''}>${k==='correct'?'✓':k==='partial'?'△':'×'} ${labels[k]}</button>`).join('')}</div></div>`:`<div class="reveal-row"><p>${isSqlCode(q)?'코드의 빈칸을 직접 채운 뒤 확인해 보세요.':term?'명칭을 먼저 떠올려 적어 보세요.':'빈 답안으로 확인해도 괜찮아요.'}</p><button class="primary" data-action="reveal" ${blocked?'disabled':''}>정답 확인</button></div>`}${s.mode==='bundle'&&BUNDLES.some(b=>b.id===s.bundle.id)?'<button class="text-button" data-action="quiz-concept">이 문제 개념 다시 보기</button>':''}${isTermRecall(q)&&s.mode!=='bundle'?`<button class="text-button" data-term-concept="${esc(q.conceptId||q.id.slice(5))}">이 용어 개념 읽기</button>`:''}${sources(q)}</article><div class="quiz-controls"><button class="secondary" data-action="prev" ${i===0?'disabled':''}>이전 문제</button><span>${a.rating?`내 평가: ${labels[a.rating]}`:'정답을 확인하고 평가해 주세요.'}</span><button class="primary" data-action="next" ${!a.rating||blocked?'disabled':''}>${i===s.items.length-1?'미평가 문제로':'다음 문제 →'}</button></div><div class="question-dots" aria-label="문제 이동">${s.items.map((x,j)=>`<button data-index="${j}" class="${x.rating||''} ${i===j?'current':''}" aria-label="${j+1}번 문제, ${labels[x.rating||'ungraded']}" ${i===j?'aria-current="step"':''}>${j+1}</button>`).join('')}</div></section>`;
 }
 function result(){const s=state.sessions.find(s=>s.id===recordId);if(!s){page='history';return history();}return `<section class="wide-section"><div class="result-heading"><span class="eyebrow">${s.items.length}장의 기록이 쌓였어요</span><h1>${s.bundle?.id===SQL_BUNDLE_ID?'SQL 영문 쓰기 완료.':s.bundle?.id===SQL_CODE_BUNDLE_ID?'SQL 구문 빈칸 완료.':s.bundle?.id?.startsWith('term-recall:')?'용어 맞히기 완료.':'오늘의 개념 학습 완료.'}</h1><p>${fmt(s.startedAt)} · ${s.bundle?.id===SQL_BUNDLE_ID?'철자와 띄어쓰기를 확인한 연습 결과입니다. 틀리거나 두 번째에 맞힌 명령어는 다음 연습에서 우선 나와요.':s.bundle?.id===SQL_CODE_BUNDLE_ID?'영어 SQL 키워드와 구문을 직접 써 보고 자기평가한 기록입니다.':s.bundle?.id?.startsWith('term-recall:')?'명칭을 직접 적고 자기평가한 기록입니다. 헷갈린 용어는 다음 연습에서 우선 나와요.':'실제 시험 점수가 아닌 자기평가 결과입니다.'}</p></div>${stats(s)}<div class="result-actions"><button class="primary" data-action="review-result">이번 회차 복습</button>${bundleResultActions(s)}</div><div class="result-preview">${s.items.filter(a=>a.rating!=='correct').slice(0,5).map(a=>`<p><span class="result-label ${a.rating}">${labels[a.rating]}</span>${esc(a.question.prompt)}</p>`).join('')||'<p>모든 문제를 정답으로 평가했어요. 시간이 지난 뒤 다시 떠올려 보세요.</p>'}</div></section>`;}
 function history(){
@@ -274,7 +591,7 @@ function history(){
   if(recordId!=='all'&&!sorted.some(s=>s.id===recordId))recordId='all';
   const selected=recordId==='all'?sorted:sorted.filter(s=>s.id===recordId);
   const records=selected.flatMap(s=>s.items.map((a,i)=>({s,a,i}))).filter(({a})=>a.revealed||a.rating||a.draft).filter(({a})=>filter==='all'||(filter==='star'?a.question.badges.length>0:a.rating===filter));
-  return `<section class="wide-section"><div class="section-heading"><div><span class="eyebrow">차곡차곡 쌓인 나의 답</span><h1>풀이 기록</h1></div><button class="secondary" data-action="export">기록 백업</button></div>${!sorted.length?`<div class="empty-state"><span class="empty-icon">▤</span><h2>아직 풀어본 문제가 없어요.</h2><p>퀴즈를 풀면 내 답과 모범답안이 이곳에 모입니다.</p><button class="primary" data-action="start">첫 학습 시작</button></div>`:`<div class="history-toolbar"><label for="session-filter">회차</label><select id="session-filter"><option value="all">모든 회차 (${sorted.length})</option>${sorted.map((s,i)=>`<option value="${esc(s.id)}" ${recordId===s.id?'selected':''}>${fmt(s.startedAt)} · ${esc(sessionLabel(s))} · ${s.status==='completed'?'완료':`${s.items.length-C.counts(s).ungraded}/${s.items.length} 진행 중`}</option>`).join('')}</select></div><div class="filter-tabs" role="group" aria-label="복습 필터">${[['all','전체'],['wrong','오답'],['partial','부분정답'],['star','★ 별표']].map(([v,t])=>`<button data-filter="${v}" class="${v===filter?'active':''}" aria-pressed="${v===filter}">${t}</button>`).join('')}</div>${selected.length===1?`<div class="session-overview">${stats(selected[0])}${selected[0].status==='active'?`<button class="secondary" data-resume="${esc(selected[0].id)}">이 회차 이어 풀기</button>`:''}</div>`:''}<p class="record-count">${records.length}개의 풀이 기록 · 문제를 펼치면 내 답과 해설을 볼 수 있어요.</p><div class="record-list">${records.length?records.map(({s,a,i})=>`<details class="record"><summary><div class="record-title"><span class="record-meta">${esc(sessionLabel(s))} · ${esc(a.question.category)} · ${fmt(s.startedAt)} · ${i+1}번</span><strong>${esc(a.question.prompt)}</strong><div>${badges(a.question)}</div></div><span class="result-label ${a.rating||'ungraded'}">${labels[a.rating||'ungraded']}</span></summary><div class="record-body">${isSqlCode(a.question)?`<h3>문제 SQL</h3><pre class="sql-code">${esc(a.question.code)}</pre>`:''}<h3>내 답안</h3><p class="my-answer">${esc(a.draft)||'작성한 답안이 없습니다.'}</p>${a.revealed?`<h3>모범답안</h3><p>${esc(a.question.answer)}</p>${englishLine(a.question)}<div class="keywords">${a.question.keywords.map(k=>`<span>${esc(k)}</span>`).join('')}</div><p class="explanation">${esc(a.question.explanation)}</p>${sources(a.question)}`:`<p>아직 정답을 확인하지 않은 문제입니다.</p><button class="secondary" data-resume="${esc(s.id)}" data-position="${i}">이 문제 이어 풀기</button>`}</div></details>`).join(''):'<div class="empty-state compact"><h2>해당하는 풀이 기록이 없어요.</h2><p>다른 필터를 선택하거나 학습을 이어가세요.</p></div>'}</div>`}</section>`;
+  return `<section class="wide-section"><div class="section-heading"><div><span class="eyebrow">차곡차곡 쌓인 나의 답</span><h1>풀이 기록</h1></div><button class="secondary" data-action="export">기록 백업</button></div>${!sorted.length?`<div class="empty-state"><span class="empty-icon">▤</span><h2>아직 풀어본 문제가 없어요.</h2><p>퀴즈를 풀면 내 답과 모범답안이 이곳에 모입니다.</p><button class="primary" data-action="start">첫 학습 시작</button></div>`:`<div class="history-toolbar"><label for="session-filter">회차</label><select id="session-filter"><option value="all">모든 회차 (${sorted.length})</option>${sorted.map((s,i)=>`<option value="${esc(s.id)}" ${recordId===s.id?'selected':''}>${fmt(s.startedAt)} · ${esc(sessionLabel(s))} · ${s.status==='completed'?'완료':`${s.items.length-C.counts(s).ungraded}/${s.items.length} 진행 중`}</option>`).join('')}</select></div><div class="filter-tabs" role="group" aria-label="복습 필터">${[['all','전체'],['wrong','오답'],['partial','부분정답'],['star','★ 별표']].map(([v,t])=>`<button data-filter="${v}" class="${v===filter?'active':''}" aria-pressed="${v===filter}">${t}</button>`).join('')}</div>${selected.length===1?`<div class="session-overview">${stats(selected[0])}${selected[0].status==='active'?`<button class="secondary" data-resume="${esc(selected[0].id)}">이 회차 이어 풀기</button>`:''}</div>`:''}<p class="record-count">${records.length}개의 풀이 기록 · 문제를 펼치면 내 답과 해설을 볼 수 있어요.</p><div class="record-list">${records.length?records.map(({s,a,i})=>`<details class="record"><summary><div class="record-title"><span class="record-meta">${esc(sessionLabel(s))} · ${esc(a.question.category)} · ${fmt(s.startedAt)} · ${i+1}번</span><strong>${esc(a.question.prompt)}</strong><div>${badges(a.question)}</div></div><span class="result-label ${a.rating||'ungraded'}">${labels[a.rating||'ungraded']}</span></summary><div class="record-body">${examMaterials(a.question)}${isSqlCode(a.question)?`<h3>문제 SQL</h3><pre class="sql-code">${esc(a.question.code)}</pre>`:''}<h3>내 답안</h3><p class="my-answer">${esc(a.draft)||'작성한 답안이 없습니다.'}</p>${a.revealed?`<h3>모범답안</h3><p>${esc(a.question.answer)}</p>${englishLine(a.question)}<div class="keywords">${a.question.keywords.map(k=>`<span>${esc(k)}</span>`).join('')}</div><p class="explanation">${esc(a.question.explanation)}</p>${sources(a.question)}`:`<p>아직 정답을 확인하지 않은 문제입니다.</p><button class="secondary" data-resume="${esc(s.id)}" data-position="${i}">이 문제 이어 풀기</button>`}</div></details>`).join(''):'<div class="empty-state compact"><h2>해당하는 풀이 기록이 없어요.</h2><p>다른 필터를 선택하거나 학습을 이어가세요.</p></div>'}</div>`}</section>`;
 }
 function backup(){return `<section class="wide-section backup-section"><span class="eyebrow">나의 학습 기록을 안전하게</span><h1>백업 · 복원</h1><p class="lead">기록은 현재 기기의 같은 브라우저에만 저장됩니다.<br>브라우저 데이터를 지우거나 기기를 바꾸기 전에 백업해 주세요.</p><div class="backup-grid"><article class="panel"><span class="panel-symbol">↓</span><h2>기록 내보내기</h2><p>개념 학습 진도와 모든 회차의 답안을<br>하나의 JSON 파일로 저장합니다.</p><button class="primary" data-action="export">백업 파일 다운로드</button><small>${state.sessions.length}개 회차 저장 중</small>${blocked?'<button class="text-button" data-action="export-raw">복구용 원본 내려받기</button>':''}</article><article class="panel"><span class="panel-symbol">↑</span><h2>백업 불러오기</h2><p>기존 기록에 백업을 합칩니다.<br>같은 회차는 더 최근 기록을 유지합니다.</p><label class="file-picker" for="import-file">백업 파일 선택<input id="import-file" type="file" accept=".json,application/json"></label><small>이 앱에서 내려받은 JSON 파일 · 최대 20MB</small></article></div><div class="info-note"><strong>알아두세요</strong><p>다른 기기와 자동으로 동기화되지는 않습니다. 다른 기기에서도 백업 파일을 불러오면 기록을 이어 볼 수 있어요. 앱 주소나 브라우저가 달라질 때도 백업을 먼저 저장해 주세요.</p></div><div id="import-message" role="status"></div></section>`;}
 function render(){
