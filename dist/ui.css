@@ -25,3 +25,13 @@ textarea:focus{border-color:#719b78}.badge{background:#f3edcc;color:#795f22}
 .sql-correct-answer{font-size:1.5rem!important;font-weight:700;letter-spacing:.08em;color:var(--accent)}
 .sql-drill-shell .question-dots{grid-template-columns:repeat(5,minmax(0,1fr))}
 @media(max-width:560px){.sql-drill-shell .answer-label{flex-wrap:wrap}.sql-drill-shell .reveal-row{flex-wrap:wrap}.sql-drill-shell .reveal-row button{width:100%}.sql-drill-shell .quiz-controls{flex-wrap:wrap}.sql-drill-shell .quiz-controls>span{order:-1;width:100%}}
+
+.term-answer{min-height:88px;max-height:180px}
+.term-question .answer-panel>p{font-size:1.4rem;font-weight:700;color:var(--accent);margin:10px 0 16px}
+.term-question .concept-more{margin:14px 0;padding-top:12px}
+
+.term-question h2{white-space:pre-wrap}
+.term-question .answer-panel>p{white-space:pre-wrap;line-height:1.7}
+.sql-code{margin:0 0 22px;padding:18px;background:#f1f4eb;border:1px solid #d9dfd2;border-radius:12px;color:#263c32;font:0.875rem/1.65 ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre;overflow-x:auto}
+.sql-code-question h2{margin-bottom:16px}
+@media(max-width:560px){.sql-code{font-size:.75rem;padding:14px}}
