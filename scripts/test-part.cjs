@@ -5,8 +5,8 @@ const app={innerHTML:'',addEventListener(){}};
 const context={console,Intl,Date,Math,JSON,Map,Set,QuizCore:C,navigator:{},crypto:{randomUUID:()=>`test-${++serial}`},confirm:()=>true,setTimeout:()=>0,clearTimeout(){},localStorage:{getItem:()=>disk,setItem:(k,v)=>{disk=v}},document:{getElementById:()=>app,querySelectorAll:()=>[],addEventListener(){}}};
 context.window=context;context.addEventListener=()=>{};context.scrollTo=()=>{};context.matchMedia=()=>({matches:true});
 vm.createContext(context);
-for(const file of ['bank.js','learn-data.js'])vm.runInContext(fs.readFileSync('dist/'+file,'utf8'),context);
-let source=fs.readFileSync('dist/app.js','utf8').replace(/render\(\);\s*\}\)\(\);\s*$/,`window.T={startPart,partReady,partPending,history,sessionLabel,bundleResultActions,questionForConcept,partPractice,set:x=>{state=x},get:()=>state,filters:(p,m,f)=>{historyPart=p;historyMode=m;filter=f;recordId='all'}};render();})();`);
+for(const file of ['bank.js','learn-data.js','supplement-data.js'])vm.runInContext(fs.readFileSync('dist/'+file,'utf8'),context);
+let source=fs.readFileSync('dist/app.js','utf8').replace(/render\(\);\s*\}\)\(\);\s*$/,`window.T={start,openLesson,concept,quiz,relatedLessons,responseInstructions,startPart,partReady,partPending,history,sessionLabel,bundleResultActions,questionForConcept,partPractice,set:x=>{state=x},get:()=>state,filters:(p,m,f)=>{historyPart=p;historyMode=m;filter=f;recordId='all'}};render();})();`);
 vm.runInContext(source,context);
 const T=context.T,B=context.LEARNING_BUNDLES,bank=context.QUIZ_BANK;
 function completed(b,id){const s=C.createBundleSession(bank,b,id);s.items.forEach((a,i)=>{a.revealed=true;C.grade(s,i,'correct')});return s;}
@@ -29,3 +29,26 @@ assert(html.includes(expected+'개의 풀이 기록'));assert(html.includes('전
 const legacy=JSON.parse(JSON.stringify(state));legacy.schema='concept-cards/v2';assert.equal(C.validateState(legacy).schema,C.SCHEMA);
 const invalid=C.createPartSession(bank.slice(0,5),'파트','invalid');invalid.items.push(...invalid.items);invalid.items.push(invalid.items[0]);const bad=C.empty();bad.sessions=[invalid];assert.throws(()=>C.validateState(bad));
 console.log('PASS: 9 part gates, capped unique samples, resume, repeat, backup, mixed-history filters, v2 compatibility, invalid backup rejection');
+const ids=B.flatMap(b=>b.questionIds);
+assert.equal(ids.length,bank.length);assert.equal(new Set(ids).size,bank.length);
+const originalContext={window:{}};vm.createContext(originalContext);
+for(const f of ['bank.js','learn-data.js'])vm.runInContext(fs.readFileSync('dist/'+f,'utf8'),originalContext);
+for(const old of originalContext.window.LEARNING_BUNDLES){
+ const now=B.find(b=>b.id===old.id);assert.equal(JSON.stringify(now),JSON.stringify(old));
+}
+for(const v of context.SUPPLEMENT_VARIANTS){
+ const q=bank.find(q=>q.id===v.conceptId),bundle=B.find(b=>b.questionIds.includes(q.id));
+ C.question(q);assert(context.LEARNING_ENGLISH[q.id]);assert(context.LEARNING_NOTES[q.id].easy.length<180);
+ assert(!/[가-힣](?:에요|예요|해요|세요)[.!?]/.test(v.prompt));
+ disk=null;T.set(C.empty());T.openLesson(bundle.id,bundle.questionIds.indexOf(q.id));
+ assert(T.concept().includes(context.LEARNING_ENGLISH[q.id].replaceAll('&','&amp;')));
+ T.start(bundle.id);let s=T.get().sessions[0];s.index=s.items.findIndex(a=>a.question.id===q.id);
+ const a=s.items[s.index];assert.equal(a.question.answer,v.answer);assert.equal(a.question.conceptId,q.id);
+ assert(!T.quiz().includes('class="english-term"'));
+ if(['numeric','result','sql'].includes(v.responseFormat))assert(T.quiz().includes(T.responseInstructions(v)[1]));
+ a.draft='남겨 둘 답';a.revealed=true;
+ assert(T.quiz().includes('class="english-term"'));C.grade(s,s.index,'correct');if(s.status==='completed')T.get().activeSessionId=null;
+ assert.equal(C.validateState(JSON.parse(JSON.stringify(T.get()))).sessions[0].items[s.index].draft,'남겨 둘 답');
+}
+assert(T.relatedLessons('test-white-black').includes('extra-white-1'));
+console.log('PASS: all supplementary concepts mapped once, original bundles unchanged, formal prompts, English visibility, answer formats and backup snapshots');
