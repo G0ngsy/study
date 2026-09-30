@@ -3,6 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
-    "build": "node scripts/build-pwa.mjs"
+    "build": "node scripts/build-pwa.mjs",
+    "test": "node scripts/test-part.cjs"
   }
 }

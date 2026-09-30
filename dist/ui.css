@@ -49,3 +49,5 @@ textarea:focus{border-color:#719b78}.badge{background:#f3edcc;color:#795f22}
 .exam-diagram{margin:1.25rem 0;padding:1rem;border:1px solid var(--line,#cdd6c4);border-radius:10px}
 .exam-diagram svg{display:block;width:100%;height:auto;max-width:620px;margin:auto}
 .exam-diagram figcaption{margin-top:.75rem;font-size:.85rem;color:var(--muted,#596956)}
+
+.history-filters{display:flex;flex-wrap:wrap;gap:1rem;margin:1rem 0}.history-filters label{display:grid;gap:.5rem;flex:1;min-width:12rem}.history-filters select{width:100%;min-width:0;padding:.7rem}.part-practice{margin-top:1.5rem}

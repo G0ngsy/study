@@ -1,6 +1,6 @@
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.QuizCore=api;})(typeof globalThis!=='undefined'?globalThis:this,function(){
   'use strict';
-  const SCHEMA='concept-cards/v2', KEY='concept-cards:v1', RATINGS=['correct','partial','wrong'];
+  const SCHEMA='concept-cards/v3', KEY='concept-cards:v1', RATINGS=['correct','partial','wrong'];
   const clone=x=>JSON.parse(JSON.stringify(x));
   function assert(ok,message){if(!ok)throw new Error(message||'기록 형식이 올바르지 않습니다.');}
   function str(v,max=30000){return typeof v==='string'&&v.length<=max;}
@@ -16,7 +16,7 @@
     return q;
   }
   function validateState(value){
-    const v=clone(value);assert(v&&[SCHEMA,'concept-cards/v1'].includes(v.schema),'이 앱에서 내보낸 백업 파일이 아닙니다.');
+    const v=clone(value);assert(v&&[SCHEMA,'concept-cards/v2','concept-cards/v1'].includes(v.schema),'이 앱에서 내보낸 백업 파일이 아닙니다.');
     const legacy=v.schema==='concept-cards/v1';
     assert(Number.isInteger(v.revision)&&v.revision>=0);
     assert(Array.isArray(v.sessions)&&v.sessions.length<=1000);
@@ -25,8 +25,9 @@
       assert(s&&str(s.id,100)&&!ids.has(s.id));ids.add(s.id);
       assert(date(s.startedAt)&&date(s.updatedAt)&&['active','completed'].includes(s.status));
       if(legacy){s.mode='random';s.bundle=null;}
-      assert(['random','bundle'].includes(s.mode));
-      assert(Array.isArray(s.items)&&(s.mode==='random'?s.items.length===30:s.items.length>=1&&s.items.length<=5));
+      assert(['random','bundle','part-random'].includes(s.mode));
+      assert(Array.isArray(s.items)&&(s.mode==='random'?s.items.length===30:s.items.length>=1&&s.items.length<=(s.mode==='part-random'?10:5)));
+      if(s.mode==='part-random')assert(str(s.part,100)&&s.part.length>0);
       assert(Number.isInteger(s.index)&&s.index>=0&&s.index<s.items.length);
       if(s.mode==='bundle'){
         const b=s.bundle;assert(b&&str(b.id,100)&&b.id.length>0&&Number.isInteger(b.version)&&b.version>0&&str(b.category,100)&&str(b.title,200));
@@ -63,6 +64,10 @@
     const selected=bundle.questionIds.map(id=>bank.find(q=>q.id===id));assert(selected.every(Boolean));
     return {id,mode:'bundle',bundle:clone(bundle),startedAt:now,updatedAt:now,completedAt:null,status:'active',index:0,items:sample(selected,selected.length,rng).map(q=>({question:clone(question(q)),draft:'',revealed:false,rating:null}))};
   }
+  function createPartSession(bank,part,id,now=new Date().toISOString(),rng=Math.random){
+    assert(str(part,100)&&part.length>0);
+    return {id,mode:'part-random',part,bundle:null,startedAt:now,updatedAt:now,completedAt:null,status:'active',index:0,items:sample(bank,Math.min(10,bank.length),rng).map(q=>({question:clone(question(q)),draft:'',revealed:false,rating:null}))};
+  }
   function grade(s,index,rating,now=new Date().toISOString()){
     assert(RATINGS.includes(rating)&&s.items[index]?.revealed,'답을 확인한 뒤 평가해 주세요.');
     s.items[index].rating=rating;s.updatedAt=now;
@@ -80,5 +85,5 @@
     const cursors=[a.learning.cursor,b.learning.cursor].filter(Boolean).sort((x,y)=>Date.parse(y.at)-Date.parse(x.at));
     return validateState({schema:SCHEMA,revision:a.revision+1,activeSessionId:active,sessions,learning:{read:[...read.values()],cursor:cursors[0]||null}});
   }
-  return {SCHEMA,KEY,RATINGS,clone,question,empty,validateState,sample,createSession,createBundleSession,grade,counts,mergeStates};
+  return {SCHEMA,KEY,RATINGS,clone,question,empty,validateState,sample,createSession,createBundleSession,createPartSession,grade,counts,mergeStates};
 });

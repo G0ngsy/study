@@ -717,7 +717,7 @@ function fmt(value){return new Intl.DateTimeFormat('ko-KR',{month:'long',day:'nu
 function badges(q){return q.badges.map(b=>`<span class="badge" title="${esc(b.reason)}">★ ${esc(b.label)}</span>`).join('');}
 function sources(q){return `<details class="sources"><summary>출처${q.badges.length?' · 별표 근거':''}</summary>${q.badges.map(b=>`<p><strong>★ ${esc(b.label)}</strong> ${esc(b.reason)}</p>`).join('')}<ul>${q.sources.map(s=>`<li>${esc(s.name)} · PDF ${s.page}쪽</li>`).join('')}</ul><small>페이지는 PDF 뷰어의 페이지 번호 기준입니다. 학습용으로 재구성한 문제입니다.</small></details>`;}
 function stats(s){const c=C.counts(s);return `<div class="score-row">${['correct','partial','wrong'].map(k=>`<div class="score ${k}"><strong>${c[k]}</strong><span>${labels[k]}</span></div>`).join('')}</div>`;}
-function sessionLabel(s){return s.mode==='bundle'?s.bundle.category+' · '+s.bundle.title:'전체 랜덤 30문제';}
+function sessionLabel(s){return s.mode==='part-random'?s.part+' · 랜덤 '+s.items.length+'문제':s.mode==='bundle'?s.bundle.category+' · '+s.bundle.title:'전체 랜덤 30문제';}
 function lesson(){return BUNDLES.find(b=>b.id===lessonId);}
 function completed(b){return state.sessions.some(s=>s.mode==='bundle'&&s.bundle.id===b.id&&s.bundle.version===b.version&&s.status==='completed');}
 function isRead(id){return state.learning.read.some(r=>r.id===id);}
@@ -735,9 +735,34 @@ function home(){
  }).join('')}</div>${installPanel()}<p class="local-note">학습 진도와 풀이 기록은 이 기기의 같은 브라우저에만 저장돼요. <button class="inline-button" data-nav="backup">백업 · 복원</button></p></section>`;
 }
 let selectedPart=BUNDLES[0].category;
+let historyPart='all',historyMode='all';
+const PARTS=[...new Set(BUNDLES.map(b=>b.category))];
+function questionPart(q){
+ const id=q.conceptId||q.id.replace(/^term-/, '');
+ return BUNDLES.find(b=>b.questionIds.includes(id))?.category||
+   (q.category.startsWith('SQL')?'SQL 개념':q.category);
+}
+function partReady(category){const bs=BUNDLES.filter(b=>b.category===category);return bs.length>0&&bs.every(completed);}
+function partPending(category){return state.sessions.filter(s=>s.mode==='part-random'&&s.part===category&&s.status==='active').sort((a,b)=>Date.parse(b.updatedAt)-Date.parse(a.updatedAt))[0]||null;}
+function partPractice(category){
+ const pending=partPending(category),count=Math.min(10,BUNDLES.filter(b=>b.category===category).flatMap(b=>b.questionIds).length);
+ return `<aside class="panel part-practice"><h2>파트 랜덤 복습</h2><p>${partReady(category)?'이 파트에서 배운 개념을 섞어서 다시 확인해 보세요.':'이 파트의 묶음 퀴즈를 모두 완료하면 랜덤 복습이 열립니다.'}</p><button class="primary" data-part-random="${esc(category)}" ${!pending&&!partReady(category)?'disabled':''}>${pending?'랜덤 복습 이어 풀기 · '+(pending.items.length-C.counts(pending).ungraded)+'/'+pending.items.length:'이 파트 랜덤 '+count+'문제'}</button></aside>`;
+}
+function startPart(category){
+ if(blocked)return;
+ const existing=partPending(category);
+ if(existing){state.activeSessionId=existing.id;if(persist())go('quiz');return;}
+ if(!partReady(category)){toast('이 파트의 묶음 퀴즈를 먼저 완료해 주세요.');return;}
+ if(active()&&hasWork(active())&&!confirm('다른 퀴즈의 풀이가 저장되어 있어요. 파트 복습을 시작할까요?'))return;
+ const ids=BUNDLES.filter(b=>b.category===category).flatMap(b=>b.questionIds);
+ const bank=BANK.filter(q=>ids.includes(q.id)).map(q=>questionForConcept(q,ids));
+ const session=C.createPartSession(bank,category,crypto.randomUUID());
+ state.sessions.unshift(session);state.activeSessionId=session.id;
+ if(persist())go('quiz');
+}
 function part(){
  const bundles=BUNDLES.filter(b=>b.category===selectedPart);
- return `<section class="wide-section"><button class="text-button" data-nav="home">← 전체 파트</button><span class="eyebrow">개념 읽기 → 묶음 퀴즈</span><h1>${esc(selectedPart)}</h1><p class="lead">순서대로 시작해도, 필요한 묶음부터 골라도 좋아요.</p><div class="lesson-list">${bundles.map((b,i)=>`<article class="panel"><span class="eyebrow">묶음 ${i+1} · ${b.questionIds.length}개 개념</span><h2>${esc(b.title)}</h2><p>${b.questionIds.map(id=>esc(NOTES[id].title)).join(' · ')}</p><p class="lesson-status">읽음 ${b.questionIds.filter(isRead).length}/${b.questionIds.length} · ${bundleStatus(b)}</p><div class="study-actions"><button class="primary" data-lesson="${b.id}">개념 보기</button><button class="secondary" data-bundle-quiz="${b.id}">${resumable(b.id)?'퀴즈 이어 풀기':completed(b)?'퀴즈 다시 풀기':'묶음 퀴즈'}</button></div></article>`).join('')}</div></section>`;
+ return `<section class="wide-section"><button class="text-button" data-nav="home">← 전체 파트</button><span class="eyebrow">개념 읽기 → 묶음 퀴즈</span><h1>${esc(selectedPart)}</h1><p class="lead">순서대로 시작해도, 필요한 묶음부터 골라도 좋아요.</p><div class="lesson-list">${bundles.map((b,i)=>`<article class="panel"><span class="eyebrow">묶음 ${i+1} · ${b.questionIds.length}개 개념</span><h2>${esc(b.title)}</h2><p>${b.questionIds.map(id=>esc(NOTES[id].title)).join(' · ')}</p><p class="lesson-status">읽음 ${b.questionIds.filter(isRead).length}/${b.questionIds.length} · ${bundleStatus(b)}</p><div class="study-actions"><button class="primary" data-lesson="${b.id}">개념 보기</button><button class="secondary" data-bundle-quiz="${b.id}">${resumable(b.id)?'퀴즈 이어 풀기':completed(b)?'퀴즈 다시 풀기':'묶음 퀴즈'}</button></div></article>`).join('')}</div>${partPractice(selectedPart)}</section>`;
 }
 function saveCursor(){
  const b=lesson();if(!b||blocked)return;
@@ -758,11 +783,14 @@ function concept(){
  <div class="concept-links" aria-label="묶음의 개념">${b.questionIds.map((id,i)=>`<button class="text-button" data-concept-index="${i}" ${i===conceptIndex?'aria-current="step"':''}>${isRead(id)?'✓ ':''}${esc(NOTES[id].title)}</button>`).join('')}</div></section>`;
 }
 function bundleResultActions(s){
+ if(s.mode==='part-random')return `<button class="primary" data-part-random="${esc(s.part)}">다른 랜덤 ${s.items.length}문제</button><button class="secondary" data-part="${esc(s.part)}">파트로 돌아가기</button>`;
+
  if(s.bundle?.id===SQL_BUNDLE_ID)return '<button class="primary" data-part="SQL 개념">SQL 파트 공부하기</button><button class="secondary" data-nav="history">풀이 기록</button>';
  if(s.bundle?.id===SQL_CODE_BUNDLE_ID)return '<button class="primary" data-part="SQL 개념">SQL 파트 공부하기</button><button class="secondary" data-nav="history">풀이 기록</button>';
  if(s.bundle?.id?.startsWith('term-recall:'))return `<button class="primary" ${s.bundle.category==='전체'?'data-nav="home"':`data-part="${esc(s.bundle.category)}"`}>파트 공부하기</button><button class="secondary" data-nav="history">풀이 기록</button>`;
  if(s.mode!=='bundle')return '<button class="secondary" data-action="start">새로운 30문제</button>';
  const b=BUNDLES.find(b=>b.id===s.bundle.id);if(!b)return '';
+ if(partReady(b.category))return `<button class="primary" data-part-random="${esc(b.category)}">이 파트 랜덤 ${Math.min(10,BUNDLES.filter(x=>x.category===b.category).flatMap(x=>x.questionIds).length)}문제</button><button class="secondary" data-part="${esc(b.category)}">파트로 돌아가기</button>`;
  const same=BUNDLES.filter(x=>x.category===b.category),next=same[same.indexOf(b)+1];
  return `<button class="secondary" data-lesson="${b.id}">개념 다시 보기</button><button class="secondary" data-bundle-quiz="${b.id}">같은 묶음 다시 풀기</button>${next?`<button class="primary" data-lesson="${next.id}">다음 묶음 →</button>`:'<button class="secondary" data-nav="home">다른 파트 공부하기</button>'}`;
 }
@@ -791,9 +819,11 @@ function result(){const s=state.sessions.find(s=>s.id===recordId);if(!s){page='h
 function history(){
   const sorted=state.sessions.filter(s=>s.status==='completed'||hasWork(s)||s.id===state.activeSessionId).sort((a,b)=>Date.parse(b.startedAt)-Date.parse(a.startedAt));
   if(recordId!=='all'&&!sorted.some(s=>s.id===recordId))recordId='all';
-  const selected=recordId==='all'?sorted:sorted.filter(s=>s.id===recordId);
-  const records=selected.flatMap(s=>s.items.map((a,i)=>({s,a,i}))).filter(({a})=>a.revealed||a.rating||a.draft).filter(({a})=>filter==='all'||(filter==='star'?a.question.badges.length>0:a.rating===filter));
-  return `<section class="wide-section"><div class="section-heading"><div><span class="eyebrow">차곡차곡 쌓인 나의 답</span><h1>풀이 기록</h1></div><button class="secondary" data-action="export">기록 백업</button></div>${!sorted.length?`<div class="empty-state"><span class="empty-icon">▤</span><h2>아직 풀어본 문제가 없어요.</h2><p>퀴즈를 풀면 내 답과 모범답안이 이곳에 모입니다.</p><button class="primary" data-action="start">첫 학습 시작</button></div>`:`<div class="history-toolbar"><label for="session-filter">회차</label><select id="session-filter"><option value="all">모든 회차 (${sorted.length})</option>${sorted.map((s,i)=>`<option value="${esc(s.id)}" ${recordId===s.id?'selected':''}>${fmt(s.startedAt)} · ${esc(sessionLabel(s))} · ${s.status==='completed'?'완료':`${s.items.length-C.counts(s).ungraded}/${s.items.length} 진행 중`}</option>`).join('')}</select></div><div class="filter-tabs" role="group" aria-label="복습 필터">${[['all','전체'],['wrong','오답'],['partial','부분정답'],['star','★ 별표']].map(([v,t])=>`<button data-filter="${v}" class="${v===filter?'active':''}" aria-pressed="${v===filter}">${t}</button>`).join('')}</div>${selected.length===1?`<div class="session-overview">${stats(selected[0])}${selected[0].status==='active'?`<button class="secondary" data-resume="${esc(selected[0].id)}">이 회차 이어 풀기</button>`:''}</div>`:''}<p class="record-count">${records.length}개의 풀이 기록 · 문제를 펼치면 내 답과 해설을 볼 수 있어요.</p><div class="record-list">${records.length?records.map(({s,a,i})=>`<details class="record"><summary><div class="record-title"><span class="record-meta">${esc(sessionLabel(s))} · ${esc(a.question.category)} · ${fmt(s.startedAt)} · ${i+1}번</span><strong>${esc(a.question.prompt)}</strong><div>${badges(a.question)}</div></div><span class="result-label ${a.rating||'ungraded'}">${labels[a.rating||'ungraded']}</span></summary><div class="record-body">${examMaterials(a.question)}${isSqlCode(a.question)?`<h3>문제 SQL</h3><pre class="sql-code">${esc(a.question.code)}</pre>`:''}<h3>내 답안</h3><p class="my-answer">${esc(a.draft)||'작성한 답안이 없습니다.'}</p>${a.revealed?`<h3>모범답안</h3><p>${esc(a.question.answer)}</p>${englishLine(a.question)}<div class="keywords">${a.question.keywords.map(k=>`<span>${esc(k)}</span>`).join('')}</div><p class="explanation">${esc(a.question.explanation)}</p>${sources(a.question)}`:`<p>아직 정답을 확인하지 않은 문제입니다.</p><button class="secondary" data-resume="${esc(s.id)}" data-position="${i}">이 문제 이어 풀기</button>`}</div></details>`).join(''):'<div class="empty-state compact"><h2>해당하는 풀이 기록이 없어요.</h2><p>다른 필터를 선택하거나 학습을 이어가세요.</p></div>'}</div>`}</section>`;
+  const scoped=sorted.filter(s=>(historyMode==='all'||s.mode===historyMode)&&(historyPart==='all'||s.items.some(a=>questionPart(a.question)===historyPart)));
+  if(recordId!=='all'&&!scoped.some(s=>s.id===recordId))recordId='all';
+  const selected=recordId==='all'?scoped:scoped.filter(s=>s.id===recordId);
+  const records=selected.flatMap(s=>s.items.map((a,i)=>({s,a,i}))).filter(({a})=>historyPart==='all'||questionPart(a.question)===historyPart).filter(({a})=>a.revealed||a.rating||a.draft).filter(({a})=>filter==='all'||(filter==='star'?a.question.badges.length>0:a.rating===filter));
+  return `<section class="wide-section"><div class="section-heading"><div><span class="eyebrow">차곡차곡 쌓인 나의 답</span><h1>풀이 기록</h1></div><button class="secondary" data-action="export">기록 백업</button></div>${!sorted.length?`<div class="empty-state"><span class="empty-icon">▤</span><h2>아직 풀어본 문제가 없어요.</h2><p>퀴즈를 풀면 내 답과 모범답안이 이곳에 모입니다.</p><button class="primary" data-action="start">첫 학습 시작</button></div>`:`<div class="history-filters"><label>파트<select id="history-part"><option value="all">전체 파트</option>${PARTS.map(p=>`<option value="${esc(p)}" ${historyPart===p?'selected':''}>${esc(p)}</option>`).join('')}</select></label><label>학습 방식<select id="history-mode">${[['all','전체 방식'],['bundle','묶음 퀴즈'],['part-random','파트 랜덤'],['random','전체 랜덤']].map(([v,t])=>`<option value="${v}" ${historyMode===v?'selected':''}>${t}</option>`).join('')}</select></label></div><div class="history-toolbar"><label for="session-filter">회차</label><select id="session-filter"><option value="all">모든 회차 (${scoped.length})</option>${scoped.map((s,i)=>`<option value="${esc(s.id)}" ${recordId===s.id?'selected':''}>${fmt(s.startedAt)} · ${esc(sessionLabel(s))} · ${s.status==='completed'?'완료':`${s.items.length-C.counts(s).ungraded}/${s.items.length} 진행 중`}</option>`).join('')}</select></div><div class="filter-tabs" role="group" aria-label="복습 필터">${[['all','전체'],['wrong','오답'],['partial','부분정답'],['correct','정답'],['star','★ 별표']].map(([v,t])=>`<button data-filter="${v}" class="${v===filter?'active':''}" aria-pressed="${v===filter}">${t}</button>`).join('')}</div>${selected.length===1&&historyPart==='all'?`<div class="session-overview">${stats(selected[0])}${selected[0].status==='active'?`<button class="secondary" data-resume="${esc(selected[0].id)}">이 회차 이어 풀기</button>`:''}</div>`:''}<p class="record-count">${records.length}개의 풀이 기록 · 문제를 펼치면 내 답과 해설을 볼 수 있어요.</p><div class="record-list">${records.length?records.map(({s,a,i})=>`<details class="record"><summary><div class="record-title"><span class="record-meta">${esc(sessionLabel(s))} · ${esc(a.question.category)} · ${fmt(s.startedAt)} · ${i+1}번</span><strong>${esc(a.question.prompt)}</strong><div>${badges(a.question)}</div></div><span class="result-label ${a.rating||'ungraded'}">${labels[a.rating||'ungraded']}</span></summary><div class="record-body">${examMaterials(a.question)}${isSqlCode(a.question)?`<h3>문제 SQL</h3><pre class="sql-code">${esc(a.question.code)}</pre>`:''}<h3>내 답안</h3><p class="my-answer">${esc(a.draft)||'작성한 답안이 없습니다.'}</p>${a.revealed?`<h3>모범답안</h3><p>${esc(a.question.answer)}</p>${englishLine(a.question)}<div class="keywords">${a.question.keywords.map(k=>`<span>${esc(k)}</span>`).join('')}</div><p class="explanation">${esc(a.question.explanation)}</p>${sources(a.question)}`:`<p>아직 정답을 확인하지 않은 문제입니다.</p><button class="secondary" data-resume="${esc(s.id)}" data-position="${i}">이 문제 이어 풀기</button>`}</div></details>`).join(''):'<div class="empty-state compact"><h2>해당하는 풀이 기록이 없어요.</h2><p>다른 필터를 선택하거나 학습을 이어가세요.</p></div>'}</div>`}</section>`;
 }
 function backup(){return `<section class="wide-section backup-section"><span class="eyebrow">나의 학습 기록을 안전하게</span><h1>백업 · 복원</h1><p class="lead">기록은 현재 기기의 같은 브라우저에만 저장됩니다.<br>브라우저 데이터를 지우거나 기기를 바꾸기 전에 백업해 주세요.</p><div class="backup-grid"><article class="panel"><span class="panel-symbol">↓</span><h2>기록 내보내기</h2><p>개념 학습 진도와 모든 회차의 답안을<br>하나의 JSON 파일로 저장합니다.</p><button class="primary" data-action="export">백업 파일 다운로드</button><small>${state.sessions.length}개 회차 저장 중</small>${blocked?'<button class="text-button" data-action="export-raw">복구용 원본 내려받기</button>':''}</article><article class="panel"><span class="panel-symbol">↑</span><h2>백업 불러오기</h2><p>기존 기록에 백업을 합칩니다.<br>같은 회차는 더 최근 기록을 유지합니다.</p><label class="file-picker" for="import-file">백업 파일 선택<input id="import-file" type="file" accept=".json,application/json"></label><small>이 앱에서 내려받은 JSON 파일 · 최대 20MB</small></article></div><div class="info-note"><strong>알아두세요</strong><p>다른 기기와 자동으로 동기화되지는 않습니다. 다른 기기에서도 백업 파일을 불러오면 기록을 이어 볼 수 있어요. 앱 주소나 브라우저가 달라질 때도 백업을 먼저 저장해 주세요.</p></div><div id="import-message" role="status"></div></section>`;}
 function render(){
@@ -825,6 +855,7 @@ document.addEventListener('click',e=>{
   if(b.dataset.nav){go(b.dataset.nav);return;}
   if(b.dataset.filter){filter=b.dataset.filter;render();return;}
   if(b.dataset.resume){const s=state.sessions.find(s=>s.id===b.dataset.resume);if(!s||s.status!=='active'||blocked)return;state.activeSessionId=s.id;if(b.dataset.position)s.index=Number(b.dataset.position);persist();go('quiz');return;}
+  if(b.dataset.partRandom){startPart(b.dataset.partRandom);return;}
   if(b.dataset.part){selectedPart=b.dataset.part;go('part');return;}
   if(b.dataset.termConcept){const target=BUNDLES.find(x=>x.questionIds.includes(b.dataset.termConcept));if(target)openLesson(target.id,target.questionIds.indexOf(b.dataset.termConcept),true);return;}
   if(b.dataset.lesson){openLesson(b.dataset.lesson);return;}
@@ -865,10 +896,11 @@ document.addEventListener('click',e=>{
     }break;
     case 'prev':if(s&&s.index>0){s.index--;stamp(s);persist();render();}break;
     case 'next':if(s&&s.items[s.index].rating){s.index=s.index<s.items.length-1?s.index+1:s.items.findIndex(a=>!a.rating);stamp(s);persist();render();window.scrollTo({top:0,behavior:'smooth'});}break;
-    case 'review-result':filter='all';go('history');break;
+    case 'review-result':filter='all';historyPart='all';historyMode='all';go('history');break;
   }
 });
 app.addEventListener('change',async e=>{
+  if(e.target.id==='history-part'||e.target.id==='history-mode'){if(e.target.id==='history-part')historyPart=e.target.value;else historyMode=e.target.value;recordId='all';render();return;}
   if(e.target.id==='session-filter'){recordId=e.target.value;render();return;}
   if(e.target.id==='import-file'){
     const f=e.target.files[0];if(!f)return;
